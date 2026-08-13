@@ -150,14 +150,33 @@ describe("authApi", () => {
     expect(getApiError(error)).toBe("Invalid username or password.");
   });
 
-  it("getApiError falls back to the axios message", () => {
-    const error = new axios.AxiosError("Request failed with status code 500");
+  it("getApiError falls back to a friendly message for a response without a body", () => {
+    const error = new axios.AxiosError(
+      "Request failed with status code 500",
+      undefined,
+      undefined,
+      undefined,
+      {
+        data: {},
+        status: 500,
+        statusText: "Internal Server Error",
+        headers: {},
+        config: {},
+      } as any,
+    );
 
-    expect(getApiError(error)).toBe("Request failed with status code 500");
+    expect(getApiError(error)).toBe("Something went wrong. Please try again.");
   });
 
-  it("getApiError stringifies non-axios errors", () => {
-    expect(getApiError("boom")).toBe("boom");
-    expect(getApiError(new Error("boom"))).toBe("Error: boom");
+  it("getApiError reports a connection problem when the server is unreachable", () => {
+    const error = new axios.AxiosError("Network Error", "ERR_NETWORK");
+
+    expect(getApiError(error)).toBe(
+      "We couldn't reach the server. Check your connection and try again.",
+    );
+  });
+
+  it("getApiError returns a friendly message for non-axios errors", () => {
+    expect(getApiError("boom")).toBe("Something went wrong. Please try again.");
   });
 });

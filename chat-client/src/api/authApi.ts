@@ -56,8 +56,15 @@ export const getCurrentUser = async (): Promise<ChatUser> => {
   return response.data;
 };
 
+// Returns every registered user (online and offline) for the chat sidebar
 export const getConnectedUsers = async (): Promise<{ data: ChatUser[] }> => {
   const response = await axios.get<ChatUser[]>(`${API_BASE_URL}/users`);
+  return { data: response.data };
+};
+
+// Returns only users who are currently online (admin dashboard)
+export const getOnlineUsers = async (): Promise<{ data: ChatUser[] }> => {
+  const response = await axios.get<ChatUser[]>(`${API_BASE_URL}/users/online`);
   return { data: response.data };
 };
 

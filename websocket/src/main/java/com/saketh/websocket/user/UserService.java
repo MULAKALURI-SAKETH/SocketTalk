@@ -73,6 +73,12 @@ public class UserService {
         return userRepository.findAllByUserStatus(ONLINE);
     }
 
+    public List<User> findAllUsers() {
+        return userRepository.findAll().stream()
+                .sorted((a, b) -> a.getSlug().compareToIgnoreCase(b.getSlug()))
+                .toList();
+    }
+
     public User findBySlug(String slug) {
         return userRepository.findById(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session expired or invalid."));

@@ -41,6 +41,8 @@ SocketTalk/
 ## Features
 
 - User registration, login, and logout with BCrypt-hashed passwords
+- Chat list shows all users, offline ones marked offline
+- Messages to offline users are stored and delivered when they sign in
 - Server-side session stored in an HttpOnly + SameSite cookie (restored via `/auth/me`)
 - Auto-logout after 1 hour of inactivity
 - Realtime presence (online/offline) across connected clients
@@ -109,7 +111,8 @@ All endpoints are served by the backend on port `8088`.
 | POST   | `/auth/login`                     | Log in and mark the user online, issues the session cookie |
 | POST   | `/auth/logout`                    | Log out and mark the user offline, clears the session cookie |
 | GET    | `/auth/me`                        | Restore the current user from the session cookie |
-| GET    | `/users`                          | List currently online users            |
+| GET    | `/users`                          | List all registered users (online + offline) |
+| GET    | `/users/online`                   | List currently online users            |
 | GET    | `/messages/{senderId}/{recipientId}` | Chat history between two users      |
 
 ## Authentication

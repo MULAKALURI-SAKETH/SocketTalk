@@ -35,6 +35,7 @@ const {
   getChatMessages,
   getConnectedUsers,
   getCurrentUser,
+  getOnlineUsers,
   login,
   logoutUser,
   register,
@@ -113,7 +114,10 @@ describe("authApi", () => {
   });
 
   it("configures axios to send cookies with every request", () => {
-    expect((axios as { defaults: { withCredentials?: boolean } }).defaults.withCredentials).toBe(true);
+    expect(
+      (axios as { defaults: { withCredentials?: boolean } }).defaults
+        .withCredentials,
+    ).toBe(true);
   });
 
   it("getCurrentUser fetches the authenticated user", async () => {
@@ -130,6 +134,20 @@ describe("authApi", () => {
       "http://localhost:8088/auth/me",
     );
     expect(result).toEqual(user);
+  });
+
+  it("getOnlineUsers fetches only the online users", async () => {
+    const users = [
+      { slug: "alice", fullName: "alice", userStatus: "ONLINE" as const },
+    ];
+    mockedAxios.get.mockResolvedValue({ data: users });
+
+    const result = await getOnlineUsers();
+
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      "http://localhost:8088/users/online",
+    );
+    expect(result.data).toEqual(users);
   });
 
   it("getApiError returns the backend message when present", () => {

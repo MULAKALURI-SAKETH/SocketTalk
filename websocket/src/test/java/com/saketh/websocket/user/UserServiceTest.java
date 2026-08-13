@@ -241,6 +241,20 @@ class UserServiceTest {
     }
 
     @Test
+    void findAllUsers_returnsAllUsersSortedBySlug() {
+        User bob = new User();
+        bob.setSlug("bob12");
+        User alice = new User();
+        alice.setSlug("alice1");
+        when(userRepository.findAll()).thenReturn(List.of(bob, alice));
+
+        List<User> users = userService.findAllUsers();
+
+        assertThat(users).extracting(User::getSlug)
+                .containsExactly("alice1", "bob12");
+    }
+
+    @Test
     void findBySlug_returnsUserWhenFound() {
         User stored = new User();
         stored.setSlug("john123");

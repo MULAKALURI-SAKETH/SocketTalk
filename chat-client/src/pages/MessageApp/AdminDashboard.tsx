@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getApiError, getConnectedUsers } from "../../api/authApi";
+import { getApiError, getOnlineUsers } from "../../api/authApi";
 import type { ChatUser } from "../../types";
 import useAdminDashboard from "../../hooks/useAdminDashboard"; // Assuming this hook exists
 
@@ -13,7 +13,7 @@ const AdminDashboard: React.FC = () => {
     setIsLoading(true);
     setError("");
     try {
-      const response = await getConnectedUsers();
+      const response = await getOnlineUsers();
       setUsers(response.data);
     } catch (cause) {
       setError(getApiError(cause));

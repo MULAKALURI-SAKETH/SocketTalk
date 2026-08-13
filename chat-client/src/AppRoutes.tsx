@@ -7,9 +7,14 @@ import ChatPage from "./pages/ChatPage/ChatPage";
 import LogoutPage from "./pages/LogoutPage/LogoutPage";
 import AdminDashboard from "./pages/MessageApp/AdminDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Loader from "./components/Loader";
 
 const AppRoutes: React.FC = () => {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, isInitializing } = useAuth();
+
+  if (isInitializing) {
+    return <Loader />;
+  }
 
   return (
     <ToastProvider>

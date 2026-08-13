@@ -57,16 +57,21 @@ const ChatPage: React.FC = () => {
     onMessage: handleIncomingMessage,
   });
 
-  const fetchAllUsers = async () => {
+  const fetchAllUsers = async (silent = false) => {
     try {
-      setIsLoading(true);
+      if (!silent) setIsLoading(true);
       const { data } = await getConnectedUsers();
       setUsers(data);
     } catch {
       setUsers([]);
-      showToast("Something went wrong while loading the chats", "error");
+      if (!silent) {
+        showToast(
+          "We couldn't load the chat list. Please refresh and try again.",
+          "error",
+        );
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   };
 
@@ -74,6 +79,18 @@ const ChatPage: React.FC = () => {
     if (hasFetched.current) return;
     hasFetched.current = true;
     void fetchAllUsers();
+  }, []);
+
+  // Keep online/offline statuses fresh while the user is on this page
+  useEffect(() => {
+    const refresh = () => void fetchAllUsers(true);
+    const intervalId = window.setInterval(refresh, 15000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refresh);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openConversation = async (otherUser: ChatUser) => {
@@ -87,7 +104,7 @@ const ChatPage: React.FC = () => {
         [otherUser.slug]: data,
       }));
     } catch {
-      showToast("Something went wrong while loading the messages", "error");
+      showToast("We couldn't load the messages. Please try again.", "error");
     } finally {
       setConversationLoading(false);
     }
@@ -97,7 +114,10 @@ const ChatPage: React.FC = () => {
     if (!user || !selectedUser) return;
     const sent = sendMessage(selectedUser.slug, content);
     if (!sent) {
-      showToast("Cannot send message. Connection is not available.", "error");
+      showToast(
+        "You're currently offline. Please wait a moment and try again.",
+        "error",
+      );
       return;
     }
     const optimisticMessage: ChatMessage = {

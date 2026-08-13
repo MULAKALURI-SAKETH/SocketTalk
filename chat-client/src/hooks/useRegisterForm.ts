@@ -36,7 +36,7 @@ const useRegisterForm = () => {
     const errors = validateRegistration(formData);
     setValidationErrors(errors);
     if (Object.keys(errors).length) {
-      showToast("Please correct the highlighted fields.", "error");
+      showToast("Please fix the highlighted fields before creating your account.", "error");
       return;
     }
     setIsSubmitting(true);
@@ -45,7 +45,7 @@ const useRegisterForm = () => {
         username: formData.username,
         password: formData.password,
       });
-      showToast("Registration successful. Please sign in.", "success");
+      showToast("Account created! You can now sign in.", "success");
       navigate("/login", { replace: true });
     } catch (error) {
       showToast(getApiError(error), "error");

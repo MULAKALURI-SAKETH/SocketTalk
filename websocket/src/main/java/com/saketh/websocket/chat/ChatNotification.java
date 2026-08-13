@@ -1,7 +1,6 @@
 package com.saketh.websocket.chat;
 
 import lombok.*;
-import org.springframework.data.annotation.Id;
 
 @Getter
 @Setter

@@ -37,7 +37,7 @@ describe("useAdminDashboard", () => {
 
     expect(mockedLogoutUser).toHaveBeenCalledWith({ username: "alice" });
     expect(showToast).toHaveBeenCalledWith(
-      "User 'alice' logged out successfully.",
+      "alice has been signed out.",
       "success",
     );
     expect(onUserLoggedOut).toHaveBeenCalledTimes(1);

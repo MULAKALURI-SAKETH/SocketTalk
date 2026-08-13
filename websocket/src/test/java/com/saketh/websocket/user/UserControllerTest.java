@@ -95,7 +95,8 @@ class UserControllerTest {
         when(sessionService.findUserByToken(null)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/auth/me"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("Session expired or invalid."));
     }
 
     @Test

@@ -19,11 +19,13 @@ export const getApiError = (error: any): string => {
     if (error.response && error.response.data && error.response.data.message) {
       return error.response.data.message;
     }
-    // Fallback to generic Axios error message
-    return error.message;
+    if (error.response) {
+      return "Something went wrong. Please try again.";
+    }
+    return "We couldn't reach the server. Check your connection and try again.";
   }
   // Fallback for non-Axios errors
-  return String(error);
+  return "Something went wrong. Please try again.";
 };
 
 // Logs the user in and returns the persisted user record (slug, fullName, userStatus)

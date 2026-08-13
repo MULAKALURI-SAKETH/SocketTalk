@@ -3,7 +3,7 @@ import type { ChangeEvent, FormEvent } from "react";
 import type { FormErrors, LoginFormData } from "../interfaces/IForm";
 import { useToast } from "../context/ToastContext";
 import { getApiError } from "../api/authApi";
-import { validate } from "../utils/authUtils";
+import { validateLogin } from "../utils/authUtils";
 import { useAuth } from "../context/AuthContext"; // Import useAuth
 
 const useLoginForm = () => {
@@ -14,6 +14,7 @@ const useLoginForm = () => {
   const [validationErrors, setValidationErrors] = useState<FormErrors>({});
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
   const { showToast } = useToast();
   const { login: authLogin } = useAuth(); // Destructure login from useAuth to avoid name collision
 
@@ -23,27 +24,30 @@ const useLoginForm = () => {
       [event.target.name]: event.target.value,
     };
     setFormData(updated);
+    if (serverError) setServerError(null);
     if (hasSubmitted) {
-      setValidationErrors(validate(updated));
+      setValidationErrors(validateLogin(updated));
     }
   };
 
   const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setHasSubmitted(true);
-    const errors = validate(formData);
+    const errors = validateLogin(formData);
     setValidationErrors(errors);
     if (Object.keys(errors).length) {
-      showToast("Please correct the highlighted fields.", "error");
+      showToast("Please fill in all the required fields.", "error");
       return;
     }
     setIsSubmitting(true);
 
     try {
       await authLogin(formData); // Authenticates via cookie and restores the session
-      showToast("Login successful.", "success");
+      showToast("Welcome back! You're signed in.", "success");
     } catch (error) {
-      showToast(getApiError(error), "error");
+      const message = getApiError(error);
+      setServerError(message);
+      showToast(message, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -53,6 +57,7 @@ const useLoginForm = () => {
     formData,
     validationErrors,
     isSubmitting,
+    serverError,
     handleChange,
     handleLoginSubmit,
   };

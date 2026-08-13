@@ -15,7 +15,7 @@ const useAdminDashboard = (onUserLoggedOut: () => void) => {
     setIsLoggingOut(true);
     try {
       await apiLogoutUser({ username }); // Call the backend API to log out the user
-      showToast(`User '${username}' logged out successfully.`, "success");
+      showToast(`${username} has been signed out.`, "success");
       onUserLoggedOut(); // Refresh the list of connected users
     } catch (error) {
       showToast(getApiError(error), "error");

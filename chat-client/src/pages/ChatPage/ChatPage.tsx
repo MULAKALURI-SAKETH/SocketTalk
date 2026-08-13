@@ -64,7 +64,7 @@ const ChatPage: React.FC = () => {
       setUsers(data);
     } catch {
       setUsers([]);
-      showToast("Something went wrong while loading the chats", "error");
+      showToast("We couldn't load the chat list. Please refresh and try again.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +87,7 @@ const ChatPage: React.FC = () => {
         [otherUser.slug]: data,
       }));
     } catch {
-      showToast("Something went wrong while loading the messages", "error");
+      showToast("We couldn't load the messages. Please try again.", "error");
     } finally {
       setConversationLoading(false);
     }
@@ -97,7 +97,10 @@ const ChatPage: React.FC = () => {
     if (!user || !selectedUser) return;
     const sent = sendMessage(selectedUser.slug, content);
     if (!sent) {
-      showToast("Cannot send message. Connection is not available.", "error");
+      showToast(
+        "You're currently offline. Please wait a moment and try again.",
+        "error",
+      );
       return;
     }
     const optimisticMessage: ChatMessage = {

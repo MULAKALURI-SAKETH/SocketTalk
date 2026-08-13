@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: websocket
+  mongodb:
+    uri: mongodb://saketh:saketh@localhost:27017/chat_app?authSource=admin
+
+server:
+  port: 8088

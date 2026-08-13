@@ -16,7 +16,7 @@ const LogoutPage: React.FC = () => {
         try {
           await logoutUser({ username });
         } catch {
-          showToast("Logout unsuccessful", "error");
+          showToast("We couldn't sign you out. Please try again.", "error");
         }
       }
       logout();

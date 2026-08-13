@@ -23,7 +23,7 @@ public class UserService {
     public User register(AuthRequest request) {
         validateCredentials(request);
         if (userRepository.existsById(request.username())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Username is already registered.");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "That username is already taken. Please choose a different one.");
         }
         User user = new User();
         user.setSlug(request.username());
@@ -36,9 +36,9 @@ public class UserService {
     public User login(AuthRequest request) {
         validateCredentials(request);
         User user = userRepository.findById(request.username())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password. Please try again."));
         if (user.getPassword() == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password.");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid username or password. Please try again.");
         }
         user.setUserStatus(ONLINE);
         return userRepository.save(user);
@@ -49,7 +49,7 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username is required.");
         }
         User user = userRepository.findById(request.username())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User was not found."));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "That user could not be found."));
         user.setUserStatus(OFFLINE);
         return userRepository.save(user);
     }
@@ -71,6 +71,17 @@ public class UserService {
 
     public List<User> findConnectedUsers() {
         return userRepository.findAllByUserStatus(ONLINE);
+    }
+
+    public List<User> findAllUsers() {
+        return userRepository.findAll().stream()
+                .sorted((a, b) -> a.getSlug().compareToIgnoreCase(b.getSlug()))
+                .toList();
+    }
+
+    public User findBySlug(String slug) {
+        return userRepository.findById(slug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session expired or invalid."));
     }
 
     private void validateCredentials(AuthRequest request) {

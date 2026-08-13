@@ -1,0 +1,8 @@
+spring:
+  application:
+    name: websocket
+  mongodb:
+    uri: ***REMOVED***
+
+server:
+  port: 8088

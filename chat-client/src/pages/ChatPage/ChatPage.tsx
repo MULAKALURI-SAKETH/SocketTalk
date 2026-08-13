@@ -1,0 +1,168 @@
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
+import {
+  getChatMessages,
+  getConnectedUsers,
+  logoutUser,
+} from "../../api/authApi";
+import { useToast } from "../../context/ToastContext";
+import type { ChatMessage, ChatUser } from "../../types";
+import { useChatSocket } from "../../hooks/useChatSocket";
+import Loader from "../../components/Loader";
+import ChatSidebar from "../../components/ChatSidebar";
+import ChatWindow from "../../components/ChatWindow";
+import ChatEmptyState from "../../components/ChatEmptyState";
+
+const ChatPage: React.FC = () => {
+  const { user, logout } = useAuth();
+  const { showToast } = useToast();
+
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [users, setUsers] = useState<ChatUser[]>([]);
+  const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
+  const [conversationLoading, setConversationLoading] = useState(false);
+  const [conversations, setConversations] = useState<
+    Record<string, ChatMessage[]>
+  >({});
+  const hasFetched = useRef(false);
+
+  const handleIncomingMessage = useCallback(
+    (message: ChatMessage) => {
+      setConversations((prev) => {
+        const otherId =
+          user && message.senderId === user.slug
+            ? message.recipientId
+            : message.senderId;
+        if (!otherId) return prev;
+        const existing = prev[otherId] ?? [];
+        if (message.id && existing.some((m) => m.id === message.id))
+          return prev;
+        return {
+          ...prev,
+          [otherId]: [
+            ...existing,
+            {
+              ...message,
+              timestamp: message.timestamp ?? new Date().toISOString(),
+            },
+          ],
+        };
+      });
+    },
+    [user],
+  );
+
+  const { sendMessage } = useChatSocket({
+    username: user?.slug,
+    onMessage: handleIncomingMessage,
+  });
+
+  const fetchAllUsers = async () => {
+    try {
+      setIsLoading(true);
+      const { data } = await getConnectedUsers();
+      setUsers(data);
+    } catch {
+      setUsers([]);
+      showToast("Something went wrong while loading the chats", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    void fetchAllUsers();
+  }, []);
+
+  const openConversation = async (otherUser: ChatUser) => {
+    setSelectedUser(otherUser);
+    if (!user) return;
+    setConversationLoading(true);
+    try {
+      const { data } = await getChatMessages(user.slug, otherUser.slug);
+      setConversations((prev) => ({
+        ...prev,
+        [otherUser.slug]: data,
+      }));
+    } catch {
+      showToast("Something went wrong while loading the messages", "error");
+    } finally {
+      setConversationLoading(false);
+    }
+  };
+
+  const handleSend = (content: string) => {
+    if (!user || !selectedUser) return;
+    const sent = sendMessage(selectedUser.slug, content);
+    if (!sent) {
+      showToast("Cannot send message. Connection is not available.", "error");
+      return;
+    }
+    const optimisticMessage: ChatMessage = {
+      id: `temp-${Date.now()}`,
+      senderId: user.slug,
+      recipientId: selectedUser.slug,
+      content,
+      timestamp: new Date().toISOString(),
+    };
+    setConversations((prev) => ({
+      ...prev,
+      [selectedUser.slug]: [
+        ...(prev[selectedUser.slug] ?? []),
+        optimisticMessage,
+      ],
+    }));
+  };
+
+  const handleLogout = async () => {
+    if (user?.slug) {
+      try {
+        await logoutUser({ username: user.slug });
+      } catch {
+        // Even if the backend logout fails, still clear the local session
+      }
+    }
+    logout();
+  };
+
+  if (isLoading) {
+    return <Loader />;
+  }
+
+  const availableUsers = users.filter(
+    (connectedUser) => connectedUser.slug !== user?.slug,
+  );
+
+  const selectedMessages = selectedUser
+    ? (conversations[selectedUser.slug] ?? [])
+    : [];
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-slate-100">
+      <ChatSidebar
+        users={availableUsers}
+        selectedSlug={selectedUser?.slug ?? null}
+        currentUserName={user?.fullName}
+        onSelectUser={(connectedUser) => void openConversation(connectedUser)}
+        onLogout={() => void handleLogout()}
+      />
+      <main className="flex-1 overflow-hidden">
+        {selectedUser ? (
+          <ChatWindow
+            otherUser={selectedUser}
+            mySlug={user?.slug ?? ""}
+            messages={selectedMessages}
+            loading={conversationLoading}
+            onSend={handleSend}
+          />
+        ) : (
+          <ChatEmptyState />
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default ChatPage;

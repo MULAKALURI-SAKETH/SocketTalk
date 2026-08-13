@@ -1,5 +1,6 @@
 import React from "react";
 import type { ChatUser } from "../types";
+import { IUserStatus } from "../types";
 
 interface ChatSidebarProps {
   users: ChatUser[];
@@ -31,6 +32,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
       <ul className="flex-1 overflow-y-auto py-2">
         {users.map((connectedUser) => {
           const isSelected = connectedUser.slug === selectedSlug;
+          const isOnline = connectedUser.userStatus === IUserStatus.ONLINE;
           return (
             <li key={connectedUser.slug}>
               <button
@@ -42,11 +44,22 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
               >
                 <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
                   {connectedUser.fullName.charAt(0).toUpperCase()}
-                  <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+                  <span
+                    className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-white ${
+                      isOnline ? "bg-emerald-500" : "bg-slate-400"
+                    }`}
+                  />
                 </span>
                 <span className="flex min-w-0 flex-col">
                   <span className="truncate font-semibold text-slate-800">
                     {connectedUser.fullName}
+                  </span>
+                  <span
+                    className={`text-xs ${
+                      isOnline ? "text-emerald-600" : "text-slate-500"
+                    }`}
+                  >
+                    {isOnline ? "Online" : "Offline"}
                   </span>
                 </span>
               </button>
@@ -55,7 +68,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         })}
         {users.length === 0 && (
           <p className="px-4 py-6 text-center text-sm text-slate-500">
-            No users are currently online.
+            No users yet. Invite someone to start chatting.
           </p>
         )}
       </ul>

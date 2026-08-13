@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 import java.util.Optional;
 
+import static com.saketh.websocket.user.UserStatus.OFFLINE;
 import static com.saketh.websocket.user.UserStatus.ONLINE;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
@@ -43,11 +44,34 @@ class UserControllerTest {
         return user;
     }
 
+    private User offlineUser(String slug) {
+        User user = new User();
+        user.setSlug(slug);
+        user.setFullName(slug);
+        user.setUserStatus(OFFLINE);
+        return user;
+    }
+
     @Test
-    void findConnectedUsers_returnsOnlineUsers() throws Exception {
-        when(userService.findConnectedUsers()).thenReturn(List.of(user("alice")));
+    void findUsers_returnsAllUsersIncludingOffline() throws Exception {
+        when(userService.findAllUsers()).thenReturn(List.of(
+                user("alice"),
+                offlineUser("bob")
+        ));
 
         mockMvc.perform(get("/users"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].slug").value("alice"))
+                .andExpect(jsonPath("$[0].userStatus").value("ONLINE"))
+                .andExpect(jsonPath("$[1].slug").value("bob"))
+                .andExpect(jsonPath("$[1].userStatus").value("OFFLINE"));
+    }
+
+    @Test
+    void findOnlineUsers_returnsOnlyOnlineUsers() throws Exception {
+        when(userService.findConnectedUsers()).thenReturn(List.of(user("alice")));
+
+        mockMvc.perform(get("/users/online"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].slug").value("alice"))
                 .andExpect(jsonPath("$[0].userStatus").value("ONLINE"));

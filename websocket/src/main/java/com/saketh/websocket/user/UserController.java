@@ -50,6 +50,11 @@ public class UserController {
     }
 
     @GetMapping("/users")
+    public ResponseEntity<List<User>> findAllUsers() {
+        return ResponseEntity.ok(userService.findAllUsers());
+    }
+
+    @GetMapping("/users/online")
     public ResponseEntity<List<User>> findConnectedUsers() {
         return ResponseEntity.ok(userService.findConnectedUsers());
     }

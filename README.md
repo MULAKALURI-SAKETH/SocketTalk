@@ -135,3 +135,12 @@ Backend tests (Spring Boot test slices) can be run with:
 cd websocket
 ./mvnw test
 ```
+
+Frontend unit tests (Jest + Testing Library) can be run with:
+
+```bash
+cd chat-client
+npm test
+```
+
+Run in watch mode with `npm run test:watch`.

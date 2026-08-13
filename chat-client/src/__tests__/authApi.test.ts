@@ -24,6 +24,7 @@ jest.unstable_mockModule("axios", () => {
           (error as { isAxiosError?: boolean })?.isAxiosError === true,
       ),
       AxiosError,
+      defaults: {},
     },
   };
 });
@@ -33,6 +34,8 @@ const {
   getApiError,
   getChatMessages,
   getConnectedUsers,
+  getCurrentUser,
+  getOnlineUsers,
   login,
   logoutUser,
   register,
@@ -110,6 +113,43 @@ describe("authApi", () => {
     expect(result.data).toEqual(messages);
   });
 
+  it("configures axios to send cookies with every request", () => {
+    expect(
+      (axios as { defaults: { withCredentials?: boolean } }).defaults
+        .withCredentials,
+    ).toBe(true);
+  });
+
+  it("getCurrentUser fetches the authenticated user", async () => {
+    const user = {
+      slug: "alice",
+      fullName: "alice",
+      userStatus: "ONLINE" as const,
+    };
+    mockedAxios.get.mockResolvedValue({ data: user });
+
+    const result = await getCurrentUser();
+
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      "http://localhost:8088/auth/me",
+    );
+    expect(result).toEqual(user);
+  });
+
+  it("getOnlineUsers fetches only the online users", async () => {
+    const users = [
+      { slug: "alice", fullName: "alice", userStatus: "ONLINE" as const },
+    ];
+    mockedAxios.get.mockResolvedValue({ data: users });
+
+    const result = await getOnlineUsers();
+
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      "http://localhost:8088/users/online",
+    );
+    expect(result.data).toEqual(users);
+  });
+
   it("getApiError returns the backend message when present", () => {
     const error = new axios.AxiosError(
       "Network Error",
@@ -128,14 +168,33 @@ describe("authApi", () => {
     expect(getApiError(error)).toBe("Invalid username or password.");
   });
 
-  it("getApiError falls back to the axios message", () => {
-    const error = new axios.AxiosError("Request failed with status code 500");
+  it("getApiError falls back to a friendly message for a response without a body", () => {
+    const error = new axios.AxiosError(
+      "Request failed with status code 500",
+      undefined,
+      undefined,
+      undefined,
+      {
+        data: {},
+        status: 500,
+        statusText: "Internal Server Error",
+        headers: {},
+        config: {},
+      } as any,
+    );
 
-    expect(getApiError(error)).toBe("Request failed with status code 500");
+    expect(getApiError(error)).toBe("Something went wrong. Please try again.");
   });
 
-  it("getApiError stringifies non-axios errors", () => {
-    expect(getApiError("boom")).toBe("boom");
-    expect(getApiError(new Error("boom"))).toBe("Error: boom");
+  it("getApiError reports a connection problem when the server is unreachable", () => {
+    const error = new axios.AxiosError("Network Error", "ERR_NETWORK");
+
+    expect(getApiError(error)).toBe(
+      "We couldn't reach the server. Check your connection and try again.",
+    );
+  });
+
+  it("getApiError returns a friendly message for non-axios errors", () => {
+    expect(getApiError("boom")).toBe("Something went wrong. Please try again.");
   });
 });

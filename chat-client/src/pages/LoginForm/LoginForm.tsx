@@ -6,6 +6,7 @@ const LoginForm: React.FC = () => {
     formData,
     validationErrors,
     isSubmitting,
+    serverError,
     handleChange,
     handleLoginSubmit,
   } = useLoginForm();
@@ -21,6 +22,14 @@ const LoginForm: React.FC = () => {
         </h2>
       </div>
       <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+        {serverError && (
+          <div
+            role="alert"
+            className="mb-6 rounded-md bg-rose-50 px-4 py-3 text-sm text-rose-700"
+          >
+            {serverError}
+          </div>
+        )}
         <form className="space-y-6" onSubmit={handleLoginSubmit} noValidate>
           <div>
             <label htmlFor="username" className="block text-sm/6 font-medium">

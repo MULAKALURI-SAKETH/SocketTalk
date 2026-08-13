@@ -41,6 +41,10 @@ SocketTalk/
 ## Features
 
 - User registration, login, and logout with BCrypt-hashed passwords
+- Chat list shows all users, offline ones marked offline
+- Messages to offline users are stored and delivered when they sign in
+- Server-side session stored in an HttpOnly + SameSite cookie (restored via `/auth/me`)
+- Auto-logout after 1 hour of inactivity
 - Realtime presence (online/offline) across connected clients
 - One-to-one messaging with historical message loading from MongoDB
 - Chat rooms grouped deterministically per sender/recipient pair
@@ -104,10 +108,16 @@ All endpoints are served by the backend on port `8088`.
 | Method | Endpoint                          | Description                            |
 | ------ | --------------------------------- | -------------------------------------- |
 | POST   | `/auth/register`                  | Register a new user (username + password) |
-| POST   | `/auth/login`                     | Log in and mark the user online        |
-| POST   | `/auth/logout`                    | Log out and mark the user offline      |
-| GET    | `/users`                          | List currently online users            |
+| POST   | `/auth/login`                     | Log in and mark the user online, issues the session cookie |
+| POST   | `/auth/logout`                    | Log out and mark the user offline, clears the session cookie |
+| GET    | `/auth/me`                        | Restore the current user from the session cookie |
+| GET    | `/users`                          | List all registered users (online + offline) |
+| GET    | `/users/online`                   | List currently online users            |
 | GET    | `/messages/{senderId}/{recipientId}` | Chat history between two users      |
+
+## Authentication
+
+Login issues a server-side session token in an `HttpOnly` + `SameSite=Strict` cookie named `chatSession`. The token never reaches JavaScript (no `localStorage`), so it is safe from XSS. On startup the client calls `GET /auth/me` to restore the session; an invalid or expired session redirects to `/login`. Sessions expire after 1 hour, and the client additionally logs the user out after 1 hour of inactivity.
 
 ## WebSocket / STOMP
 

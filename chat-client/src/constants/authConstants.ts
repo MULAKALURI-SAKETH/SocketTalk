@@ -28,3 +28,13 @@ export const fields: IFormField[] = [
     autoComplete: "new-password",
   },
 ];
+
+export const INACTIVITY_TIMEOUT_MS = 3600000;
+export const ACTIVITY_EVENTS = [
+  "mousedown",
+  "mousemove",
+  "keydown",
+  "scroll",
+  "touchstart",
+  "click",
+];

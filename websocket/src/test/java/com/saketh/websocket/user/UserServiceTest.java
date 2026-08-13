@@ -239,4 +239,40 @@ class UserServiceTest {
         assertThat(connected.get(0).getSlug()).isEqualTo("john123");
         verify(userRepository).findAllByUserStatus(ONLINE);
     }
+
+    @Test
+    void findAllUsers_returnsAllUsersSortedBySlug() {
+        User bob = new User();
+        bob.setSlug("bob12");
+        User alice = new User();
+        alice.setSlug("alice1");
+        when(userRepository.findAll()).thenReturn(List.of(bob, alice));
+
+        List<User> users = userService.findAllUsers();
+
+        assertThat(users).extracting(User::getSlug)
+                .containsExactly("alice1", "bob12");
+    }
+
+    @Test
+    void findBySlug_returnsUserWhenFound() {
+        User stored = new User();
+        stored.setSlug("john123");
+
+        when(userRepository.findById("john123")).thenReturn(Optional.of(stored));
+
+        User found = userService.findBySlug("john123");
+
+        assertThat(found.getSlug()).isEqualTo("john123");
+    }
+
+    @Test
+    void findBySlug_throwsUnauthorizedWhenUserNotFound() {
+        when(userRepository.findById("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.findBySlug("ghost"))
+                .isInstanceOf(ResponseStatusException.class)
+                .satisfies(ex -> assertThat(((ResponseStatusException) ex).getStatusCode())
+                        .isEqualTo(HttpStatus.UNAUTHORIZED));
+    }
 }

@@ -5,6 +5,9 @@ import { LogoutRequest, ChatUser, ChatMessage } from "../types"; // Import neces
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8088";
 
+// Send the HttpOnly session cookie with every request
+axios.defaults.withCredentials = true;
+
 export interface AuthCredentials {
   username: string;
   password: string;
@@ -16,11 +19,13 @@ export const getApiError = (error: any): string => {
     if (error.response && error.response.data && error.response.data.message) {
       return error.response.data.message;
     }
-    // Fallback to generic Axios error message
-    return error.message;
+    if (error.response) {
+      return "Something went wrong. Please try again.";
+    }
+    return "We couldn't reach the server. Check your connection and try again.";
   }
   // Fallback for non-Axios errors
-  return String(error);
+  return "Something went wrong. Please try again.";
 };
 
 // Logs the user in and returns the persisted user record (slug, fullName, userStatus)
@@ -45,8 +50,21 @@ export const register = async (
   return response.data;
 };
 
+// Restores the logged-in user by validating the HttpOnly session cookie
+export const getCurrentUser = async (): Promise<ChatUser> => {
+  const response = await axios.get<ChatUser>(`${API_BASE_URL}/auth/me`);
+  return response.data;
+};
+
+// Returns every registered user (online and offline) for the chat sidebar
 export const getConnectedUsers = async (): Promise<{ data: ChatUser[] }> => {
   const response = await axios.get<ChatUser[]>(`${API_BASE_URL}/users`);
+  return { data: response.data };
+};
+
+// Returns only users who are currently online (admin dashboard)
+export const getOnlineUsers = async (): Promise<{ data: ChatUser[] }> => {
+  const response = await axios.get<ChatUser[]>(`${API_BASE_URL}/users/online`);
   return { data: response.data };
 };
 

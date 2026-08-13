@@ -77,9 +77,11 @@ describe("useRegisterForm", () => {
     await user.type(screen.getByLabelText("Confirm password"), "Password13");
     await user.click(screen.getByText("Submit"));
 
-    expect(screen.getByText("Passwords do not match.")).toBeInTheDocument();
+    expect(
+      screen.getByText("Those passwords don't match. Please try again."),
+    ).toBeInTheDocument();
     expect(showToast).toHaveBeenCalledWith(
-      "Please correct the highlighted fields.",
+      "Please fix the highlighted fields before creating your account.",
       "error",
     );
     expect(mockedRegister).not.toHaveBeenCalled();
@@ -106,7 +108,7 @@ describe("useRegisterForm", () => {
       }),
     );
     expect(showToast).toHaveBeenCalledWith(
-      "Registration successful. Please sign in.",
+      "Account created! You can now sign in.",
       "success",
     );
     expect(navigate).toHaveBeenCalledWith("/login", { replace: true });

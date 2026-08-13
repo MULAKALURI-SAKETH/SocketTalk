@@ -73,6 +73,11 @@ public class UserService {
         return userRepository.findAllByUserStatus(ONLINE);
     }
 
+    public User findBySlug(String slug) {
+        return userRepository.findById(slug)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session expired or invalid."));
+    }
+
     private void validateCredentials(AuthRequest request) {
         if (request == null || request.username() == null || request.username().isBlank() || request.password() == null || request.password().isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username and password are required.");

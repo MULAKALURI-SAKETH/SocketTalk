@@ -1,8 +1,26 @@
-import { afterEach, describe, expect, it } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import ProtectedRoute from "../components/ProtectedRoute";
-import { AuthProvider } from "../context/AuthContext";
+import type { ChatUser } from "../types";
+import { IUserStatus } from "../types";
+
+jest.unstable_mockModule("../api/authApi", () => ({
+  getCurrentUser: jest.fn(),
+  login: jest.fn(),
+  getApiError: jest.fn(),
+}));
+
+const { getCurrentUser } = await import("../api/authApi");
+const { AuthProvider } = await import("../context/AuthContext");
+const { default: ProtectedRoute } = await import("../components/ProtectedRoute");
+
+const mockedGetCurrentUser = jest.mocked(getCurrentUser);
+
+const testUser: ChatUser = {
+  slug: "alice",
+  fullName: "alice",
+  userStatus: IUserStatus.ONLINE,
+};
 
 const Protected = () => <div>Protected Content</div>;
 
@@ -26,23 +44,27 @@ const renderProtectedRoute = () =>
   );
 
 describe("ProtectedRoute", () => {
+  beforeEach(() => {
+    mockedGetCurrentUser.mockRejectedValue(new Error("401"));
+  });
+
   afterEach(() => {
     localStorage.clear();
   });
 
-  it("renders children when the user is logged in", () => {
-    localStorage.setItem("authToken", "authenticated");
+  it("renders children when the session is valid", async () => {
+    mockedGetCurrentUser.mockResolvedValue(testUser);
 
     renderProtectedRoute();
 
-    expect(screen.getByText("Protected Content")).toBeInTheDocument();
+    expect(await screen.findByText("Protected Content")).toBeInTheDocument();
     expect(screen.queryByText("Login Page")).not.toBeInTheDocument();
   });
 
-  it("redirects to /login when the user is logged out", () => {
+  it("redirects to /login when the session is invalid", async () => {
     renderProtectedRoute();
 
-    expect(screen.getByText("Login Page")).toBeInTheDocument();
+    expect(await screen.findByText("Login Page")).toBeInTheDocument();
     expect(screen.queryByText("Protected Content")).not.toBeInTheDocument();
   });
 });

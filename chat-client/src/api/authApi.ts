@@ -5,6 +5,9 @@ import { LogoutRequest, ChatUser, ChatMessage } from "../types"; // Import neces
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8088";
 
+// Send the HttpOnly session cookie with every request
+axios.defaults.withCredentials = true;
+
 export interface AuthCredentials {
   username: string;
   password: string;
@@ -42,6 +45,12 @@ export const register = async (
     `${API_BASE_URL}/auth/register`,
     credentials,
   );
+  return response.data;
+};
+
+// Restores the logged-in user by validating the HttpOnly session cookie
+export const getCurrentUser = async (): Promise<ChatUser> => {
+  const response = await axios.get<ChatUser>(`${API_BASE_URL}/auth/me`);
   return response.data;
 };
 

@@ -24,6 +24,7 @@ jest.unstable_mockModule("axios", () => {
           (error as { isAxiosError?: boolean })?.isAxiosError === true,
       ),
       AxiosError,
+      defaults: {},
     },
   };
 });
@@ -33,6 +34,7 @@ const {
   getApiError,
   getChatMessages,
   getConnectedUsers,
+  getCurrentUser,
   login,
   logoutUser,
   register,
@@ -108,6 +110,26 @@ describe("authApi", () => {
       "http://localhost:8088/messages/alice/bob",
     );
     expect(result.data).toEqual(messages);
+  });
+
+  it("configures axios to send cookies with every request", () => {
+    expect((axios as { defaults: { withCredentials?: boolean } }).defaults.withCredentials).toBe(true);
+  });
+
+  it("getCurrentUser fetches the authenticated user", async () => {
+    const user = {
+      slug: "alice",
+      fullName: "alice",
+      userStatus: "ONLINE" as const,
+    };
+    mockedAxios.get.mockResolvedValue({ data: user });
+
+    const result = await getCurrentUser();
+
+    expect(mockedAxios.get).toHaveBeenCalledWith(
+      "http://localhost:8088/auth/me",
+    );
+    expect(result).toEqual(user);
   });
 
   it("getApiError returns the backend message when present", () => {

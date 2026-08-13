@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import type { FormErrors, LoginFormData } from "../interfaces/IForm";
 import { useToast } from "../context/ToastContext";
-import { getApiError, login } from "../api/authApi";
+import { getApiError } from "../api/authApi";
 import { validate } from "../utils/authUtils";
 import { useAuth } from "../context/AuthContext"; // Import useAuth
 
@@ -40,9 +40,8 @@ const useLoginForm = () => {
     setIsSubmitting(true);
 
     try {
-      const user = await login(formData);
+      await authLogin(formData); // Authenticates via cookie and restores the session
       showToast("Login successful.", "success");
-      authLogin(user); // Persist the real user record returned by the backend
     } catch (error) {
       showToast(getApiError(error), "error");
     } finally {

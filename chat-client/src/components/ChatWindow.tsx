@@ -1,13 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { ChatMessage, ChatUser } from "../types";
-
-interface ChatWindowProps {
-  otherUser: ChatUser;
-  mySlug: string;
-  messages: ChatMessage[];
-  loading: boolean;
-  onSend: (content: string) => void;
-}
+import { ChatWindowProps } from "../interfaces/IChat";
 
 const formatTime = (timestamp?: string): string => {
   if (!timestamp) return "";

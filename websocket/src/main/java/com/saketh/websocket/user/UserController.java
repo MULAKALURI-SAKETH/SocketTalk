@@ -27,7 +27,7 @@ import java.util.List;
 public class UserController {
 
     public static final String SESSION_COOKIE_NAME = "chatSession";
-    private static final int SESSION_MAX_AGE_SECONDS = 60 * 60;
+    private static final int SESSION_MAX_AGE_SECONDS = 3600;
 
     private final UserService userService;
     private final SessionService sessionService;

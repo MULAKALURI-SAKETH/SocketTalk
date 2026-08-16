@@ -20,9 +20,6 @@ const ChatEmptyState: React.FC = () => {
       <p className="mt-4 text-lg font-medium text-slate-500">
         Select a user to start chatting
       </p>
-      <p className="mt-1 text-sm text-slate-400">
-        Choose a connected user from the list on the left.
-      </p>
     </div>
   );
 };

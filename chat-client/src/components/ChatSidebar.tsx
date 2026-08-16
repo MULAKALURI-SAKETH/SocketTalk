@@ -1,14 +1,6 @@
 import React from "react";
-import type { ChatUser } from "../types";
 import { IUserStatus } from "../types";
-
-interface ChatSidebarProps {
-  users: ChatUser[];
-  selectedSlug: string | null;
-  currentUserName?: string;
-  onSelectUser: (user: ChatUser) => void;
-  onLogout: () => void;
-}
+import { ChatSidebarProps } from "../interfaces/IChat";
 
 const ChatSidebar: React.FC<ChatSidebarProps> = ({
   users,
@@ -39,7 +31,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 type="button"
                 onClick={() => onSelectUser(connectedUser)}
                 className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
-                  isSelected ? "bg-indigo-50" : "hover:bg-slate-50"
+                  isSelected ? "bg-blue-100" : "hover:bg-slate-50"
                 }`}
               >
                 <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">

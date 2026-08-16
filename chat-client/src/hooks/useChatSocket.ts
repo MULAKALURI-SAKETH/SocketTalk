@@ -1,7 +1,7 @@
 import { Client } from "@stomp/stompjs";
 import { useCallback, useEffect, useRef } from "react";
 import SockJS from "sockjs-client/dist/sockjs";
-import type { ChatMessage } from "../types";
+import type { ChatAttachment, ChatMessage } from "../types";
 import { IChatSocketOptions } from "../interfaces/IUser";
 
 const SOCKET_URL = import.meta.env.VITE_WS_URL;
@@ -44,12 +44,21 @@ export const useChatSocket = ({ username, onMessage }: IChatSocketOptions) => {
   }, [username]);
 
   const sendMessage = useCallback(
-    (recipientId: string, content: string): boolean => {
+    (
+      recipientId: string,
+      content: string,
+      attachments: ChatAttachment[] = [],
+    ): boolean => {
       const client = clientRef.current;
       if (!client || !client.connected || !username) return false;
       client.publish({
         destination: "/app/chat",
-        body: JSON.stringify({ senderId: username, recipientId, content }),
+        body: JSON.stringify({
+          senderId: username,
+          recipientId,
+          content,
+          attachments,
+        }),
       });
       return true;
     },

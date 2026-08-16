@@ -51,9 +51,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           <p className="text-center text-sm text-slate-400">
             Loading messages…
           </p>
-        ) : messages.length === 0 ? (
-          <p className="text-center text-sm text-slate-400">
-            No messages yet. Say hello!
+        ) : messages.length !== 0 ? (
+          <p className="text-center text-shadow-md text-slate-600">
+            No messages yet. Say hello!👋
           </p>
         ) : (
           <div className="flex flex-col gap-2">

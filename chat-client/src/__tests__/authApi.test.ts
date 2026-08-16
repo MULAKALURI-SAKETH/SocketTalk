@@ -39,6 +39,7 @@ const {
   login,
   logoutUser,
   register,
+  uploadImage,
 } = await import("../api/authApi");
 
 const mockedAxios = jest.mocked(axios);
@@ -111,6 +112,27 @@ describe("authApi", () => {
       "http://localhost:8088/messages/alice/bob",
     );
     expect(result.data).toEqual(messages);
+  });
+
+  it("uploadImage posts a file and returns the attachment metadata", async () => {
+    const attachment = {
+      url: "/uploads/img1/photo.png",
+      fileName: "photo.png",
+      contentType: "image/png",
+      fileSize: 1234,
+    };
+    mockedAxios.post.mockResolvedValue({ data: attachment });
+    const file = new File(["image-bytes"], "photo.png", { type: "image/png" });
+
+    const result = await uploadImage(file);
+
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      "http://localhost:8088/uploads",
+      expect.any(FormData),
+    );
+    const formData = mockedAxios.post.mock.calls[0][1] as FormData;
+    expect(formData.get("file")).toEqual(file);
+    expect(result).toEqual(attachment);
   });
 
   it("configures axios to send cookies with every request", () => {

@@ -5,6 +5,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -20,5 +21,6 @@ public class ChatMessage {
     private String senderId;
     private String recipientId;
     private String content;
+    private List<ChatAttachment> attachments;
     private Date timestamp;
 }

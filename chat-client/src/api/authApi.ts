@@ -1,11 +1,10 @@
 import axios from "axios";
-import { LogoutRequest, ChatUser, ChatMessage } from "../types"; // Import necessary types
+import { LogoutRequest, ChatUser, ChatMessage, ChatAttachment } from "../types"; // Import necessary types
 
 // Backend API base URL - configured via .env (VITE_API_BASE_URL)
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8088";
 
-// Send the HttpOnly session cookie with every request
 axios.defaults.withCredentials = true;
 
 export interface AuthCredentials {
@@ -82,4 +81,14 @@ export const getChatMessages = async (
     `${API_BASE_URL}/messages/${senderId}/${recipientId}`,
   );
   return { data: response.data };
+};
+
+export const uploadImage = async (file: File): Promise<ChatAttachment> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await axios.post<ChatAttachment>(
+    `${API_BASE_URL}/uploads`,
+    formData,
+  );
+  return response.data;
 };

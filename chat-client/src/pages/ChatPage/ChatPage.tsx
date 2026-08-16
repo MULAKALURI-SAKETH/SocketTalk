@@ -6,7 +6,7 @@ import {
   logoutUser,
 } from "../../api/authApi";
 import { useToast } from "../../context/ToastContext";
-import type { ChatMessage, ChatUser } from "../../types";
+import type { ChatMessage, ChatUser, ChatAttachment } from "../../types";
 import { useChatSocket } from "../../hooks/useChatSocket";
 import Loader from "../../components/Loader";
 import ChatSidebar from "../../components/ChatSidebar";
@@ -110,9 +110,9 @@ const ChatPage: React.FC = () => {
     }
   };
 
-  const handleSend = (content: string) => {
+  const handleSend = (content: string, attachments?: ChatAttachment[]) => {
     if (!user || !selectedUser) return;
-    const sent = sendMessage(selectedUser.slug, content);
+    const sent = sendMessage(selectedUser.slug, content, attachments);
     if (!sent) {
       showToast(
         "You're currently offline. Please wait a moment and try again.",
@@ -125,6 +125,7 @@ const ChatPage: React.FC = () => {
       senderId: user.slug,
       recipientId: selectedUser.slug,
       content,
+      attachments,
       timestamp: new Date().toISOString(),
     };
     setConversations((prev) => ({

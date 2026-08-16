@@ -13,11 +13,19 @@ export interface LogoutRequest {
   username: string;
 }
 
+export interface ChatAttachment {
+  url: string;
+  fileName: string;
+  contentType: string;
+  fileSize: number;
+}
+
 export interface ChatMessage {
   id?: string;
   chatId?: string;
   senderId: string;
   recipientId: string;
   content: string;
+  attachments?: ChatAttachment[];
   timestamp?: string;
 }

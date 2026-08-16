@@ -30,6 +30,7 @@ public class ChatController {
                         .senderId(savedMessage.getSenderId())
                         .recipientId(savedMessage.getRecipientId())
                         .content(savedMessage.getContent())
+                        .attachments(savedMessage.getAttachments())
                         .build()
         );
     }

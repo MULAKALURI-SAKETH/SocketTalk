@@ -1,4 +1,4 @@
-import { ChatMessage, ChatUser } from "../types";
+import { ChatMessage, ChatUser, ChatAttachment } from "../types";
 
 export interface ChatSidebarProps {
   users: ChatUser[];
@@ -13,5 +13,10 @@ export interface ChatWindowProps {
   mySlug: string;
   messages: ChatMessage[];
   loading: boolean;
-  onSend: (content: string) => void;
+  onSend: (content: string, attachments?: ChatAttachment[]) => void;
+}
+
+export interface EmojiPickerProps {
+  onSelect: (emoji: string) => void;
+  onClose: () => void;
 }

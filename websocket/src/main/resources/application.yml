@@ -3,6 +3,10 @@ spring:
     name: websocket
   mongodb:
     uri: mongodb://saketh:saketh@localhost:27017/chat_app?authSource=admin
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
 
 server:
   port: 8088
@@ -10,3 +14,5 @@ server:
 app:
   auth:
     cookie-secure: false
+  upload:
+    dir: uploads

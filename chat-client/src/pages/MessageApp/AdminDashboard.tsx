@@ -36,7 +36,7 @@ const AdminDashboard: React.FC = () => {
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-indigo-600">
-              REALTIME CHAT
+              Socket Talk
             </p>
             <h1 className="mt-1 text-2xl font-bold">Online users</h1>
           </div>

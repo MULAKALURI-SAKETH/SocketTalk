@@ -1,8 +1,10 @@
 spring:
+  config:
+    import: 'optional:file:.env[.properties]'
   application:
     name: websocket
   mongodb:
-    uri: ***REMOVED***
+    uri: ${MONGODB_URI:mongodb://localhost:27017/chat_app?authSource=admin}
   servlet:
     multipart:
       max-file-size: 5MB

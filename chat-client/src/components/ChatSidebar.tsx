@@ -12,7 +12,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
   return (
     <aside className="flex w-80 shrink-0 flex-col border-r border-slate-200 bg-white">
       <header className="border-b border-slate-200 px-4 py-4">
-        <p className="text-sm font-semibold text-indigo-600">REALTIME CHAT</p>
+        <p className="text-sm font-semibold text-indigo-600">SocketTalk</p>
         <h1 className="mt-1 text-xl font-bold text-slate-800">Chats</h1>
         {currentUserName && (
           <p className="mt-1 text-sm text-slate-500">

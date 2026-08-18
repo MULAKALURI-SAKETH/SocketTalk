@@ -40,3 +40,4 @@ vite.config.ts.timestamp-*
 # Maven build output
 target/
 uploads/
+.codegraphy/*

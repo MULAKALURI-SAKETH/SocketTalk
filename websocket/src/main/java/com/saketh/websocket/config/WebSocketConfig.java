@@ -8,6 +8,8 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
@@ -42,7 +44,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public boolean configureMessageConverters(List<MessageConverter> messageConverters) {
         DefaultContentTypeResolver resolver = new DefaultContentTypeResolver();
         resolver.setDefaultMimeType(APPLICATION_JSON);
-        JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter();
+        JsonMapper jsonMapper = JsonMapper.builder()
+                .disable(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES)
+                .build();
+        JacksonJsonMessageConverter converter = new JacksonJsonMessageConverter(jsonMapper);
         converter.setContentTypeResolver(resolver);
         messageConverters.add(new StringMessageConverter());
         messageConverters.add(new ByteArrayMessageConverter());

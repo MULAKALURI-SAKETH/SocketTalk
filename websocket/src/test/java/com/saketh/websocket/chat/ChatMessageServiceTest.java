@@ -147,7 +147,7 @@ class ChatMessageServiceTest {
         when(repository.findById("1")).thenReturn(Optional.of(message));
         when(repository.save(message)).thenReturn(message);
 
-        ChatMessage updated = chatMessageService.editMessage("1", "Hello edited", "alice");
+        ChatMessage updated = chatMessageService.editMessage("1", "Hello edited", "alice", null);
 
         assertThat(updated.getContent()).isEqualTo("Hello edited");
         assertThat(updated.isEdited()).isTrue();
@@ -155,13 +155,53 @@ class ChatMessageServiceTest {
     }
 
     @Test
-    void editMessage_rejectsWhenAlreadyRead() {
+    void editMessage_allowsEditingAlreadyReadMessages() {
+        ChatMessage message = ChatMessage.builder()
+                .id("1").senderId("alice").recipientId("bob").content("Hello")
+                .readByRecipient(true).build();
+        when(repository.findById("1")).thenReturn(Optional.of(message));
+        when(repository.save(message)).thenReturn(message);
+
+        ChatMessage updated = chatMessageService.editMessage("1", "New", "alice", null);
+
+        assertThat(updated.getContent()).isEqualTo("New");
+        assertThat(updated.isEdited()).isTrue();
+    }
+
+    @Test
+    void editMessage_updatesAttachments() {
+        ChatAttachment oldAttachment = ChatAttachment.builder()
+                .url("/uploads/abc/old.jpg").build();
+        ChatAttachment keptAttachment = ChatAttachment.builder()
+                .url("/uploads/abc/kept.jpg").build();
+        ChatAttachment newAttachment = ChatAttachment.builder()
+                .url("/uploads/abc/new.jpg").build();
+        ChatMessage message = ChatMessage.builder()
+                .id("1").senderId("alice").recipientId("bob").content("Hello")
+                .readByRecipient(true)
+                .attachments(List.of(oldAttachment, keptAttachment)).build();
+        when(repository.findById("1")).thenReturn(Optional.of(message));
+        when(repository.save(message)).thenReturn(message);
+
+        ChatMessage updated = chatMessageService.editMessage(
+                "1",
+                "Edited",
+                "alice",
+                List.of(keptAttachment, newAttachment)
+        );
+
+        assertThat(updated.getAttachments()).containsExactly(keptAttachment, newAttachment);
+        verify(uploadService).deleteByUrl("/uploads/abc/old.jpg");
+    }
+
+    @Test
+    void editMessage_rejectsEmptyContentWithoutAttachments() {
         ChatMessage message = ChatMessage.builder()
                 .id("1").senderId("alice").recipientId("bob").content("Hello")
                 .readByRecipient(true).build();
         when(repository.findById("1")).thenReturn(Optional.of(message));
 
-        assertThatThrownBy(() -> chatMessageService.editMessage("1", "New", "alice"))
+        assertThatThrownBy(() -> chatMessageService.editMessage("1", "  ", "alice", List.of()))
                 .isInstanceOf(ResponseStatusException.class);
     }
 
@@ -171,7 +211,7 @@ class ChatMessageServiceTest {
                 .id("1").senderId("alice").recipientId("bob").content("Hello").build();
         when(repository.findById("1")).thenReturn(Optional.of(message));
 
-        assertThatThrownBy(() -> chatMessageService.editMessage("1", "New", "bob"))
+        assertThatThrownBy(() -> chatMessageService.editMessage("1", "New", "bob", null))
                 .isInstanceOf(ResponseStatusException.class);
     }
 

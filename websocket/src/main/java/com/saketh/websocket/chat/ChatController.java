@@ -31,17 +31,23 @@ public class ChatController {
             @Payload ChatMessage chatMessage
     ) {
         ChatMessage savedMessage = chatMessageService.save(chatMessage);
+        ChatNotification notification = ChatNotification.builder()
+                .type(ChatNotificationType.MESSAGE)
+                .id(savedMessage.getId())
+                .senderId(savedMessage.getSenderId())
+                .recipientId(savedMessage.getRecipientId())
+                .content(savedMessage.getContent())
+                .attachments(savedMessage.getAttachments())
+                .build();
         messagingTemplate.convertAndSendToUser(
                 chatMessage.getRecipientId(),
                 "/queue/messages",
-                ChatNotification.builder()
-                        .type(ChatNotificationType.MESSAGE)
-                        .id(savedMessage.getId())
-                        .senderId(savedMessage.getSenderId())
-                        .recipientId(savedMessage.getRecipientId())
-                        .content(savedMessage.getContent())
-                        .attachments(savedMessage.getAttachments())
-                        .build()
+                notification
+        );
+        messagingTemplate.convertAndSendToUser(
+                chatMessage.getSenderId(),
+                "/queue/messages",
+                notification
         );
     }
 
@@ -87,13 +93,19 @@ public class ChatController {
             @CookieValue(value = UserController.SESSION_COOKIE_NAME, required = false) String sessionToken
     ) {
         String editorId = resolveUser(sessionToken, request.userId());
-        ChatMessage updated = chatMessageService.editMessage(messageId, request.content(), editorId);
+        ChatMessage updated = chatMessageService.editMessage(
+                messageId,
+                request.content(),
+                editorId,
+                request.attachments()
+        );
         ChatNotification notification = ChatNotification.builder()
                 .type(ChatNotificationType.MESSAGE_EDITED)
                 .id(updated.getId())
                 .senderId(updated.getSenderId())
                 .recipientId(updated.getRecipientId())
                 .content(updated.getContent())
+                .attachments(updated.getAttachments())
                 .edited(true)
                 .build();
         messagingTemplate.convertAndSendToUser(updated.getRecipientId(), "/queue/messages", notification);

@@ -4,9 +4,20 @@ import {
   getChatMessages,
   getConnectedUsers,
   logoutUser,
+  markMessagesAsRead,
+  deleteMessageForEveryone,
+  deleteMessageForMe,
+  editMessage,
+  getApiError,
 } from "../../api/authApi";
 import { useToast } from "../../context/ToastContext";
-import type { ChatMessage, ChatUser, ChatAttachment } from "../../types";
+import type {
+  ChatMessage,
+  ChatUser,
+  ChatAttachment,
+  ChatEvent,
+} from "../../types";
+import { ChatNotificationType } from "../../types";
 import { useChatSocket } from "../../hooks/useChatSocket";
 import Loader from "../../components/Loader";
 import ChatSidebar from "../../components/ChatSidebar";
@@ -25,31 +36,120 @@ const ChatPage: React.FC = () => {
     Record<string, ChatMessage[]>
   >({});
   const hasFetched = useRef(false);
+  const selectedUserRef = useRef<ChatUser | null>(null);
+  selectedUserRef.current = selectedUser;
 
-  const handleIncomingMessage = useCallback(
-    (message: ChatMessage) => {
-      setConversations((prev) => {
-        const otherId =
-          user && message.senderId === user.slug
-            ? message.recipientId
-            : message.senderId;
-        if (!otherId) return prev;
-        const existing = prev[otherId] ?? [];
-        if (message.id && existing.some((m) => m.id === message.id))
-          return prev;
-        return {
-          ...prev,
-          [otherId]: [
-            ...existing,
-            {
-              ...message,
-              timestamp: message.timestamp ?? new Date().toISOString(),
-            },
-          ],
-        };
-      });
+  const removeMessageById = (
+    conversations: Record<string, ChatMessage[]>,
+    messageId: string,
+  ): Record<string, ChatMessage[]> => {
+    return Object.fromEntries(
+      Object.entries(conversations).map(([key, messages]) => [
+        key,
+        messages.filter((message) => message.id !== messageId),
+      ]),
+    );
+  };
+
+  const markConversationRead = useCallback(
+    (senderId: string) => {
+      if (!user) return;
+      void markMessagesAsRead(senderId, user.slug).catch(() => {});
     },
     [user],
+  );
+
+  const handleIncomingMessage = useCallback(
+    (event: ChatEvent) => {
+      if (event.type === ChatNotificationType.MESSAGE) {
+        const message = event as unknown as ChatMessage;
+        setConversations((prev) => {
+          const otherId =
+            user && message.senderId === user.slug
+              ? message.recipientId
+              : message.senderId;
+          if (!otherId) return prev;
+          const existing = prev[otherId] ?? [];
+          if (message.id && existing.some((m) => m.id === message.id))
+            return prev;
+          if (user && message.senderId === user.slug) {
+            const tempIndex = existing.findIndex(
+              (m) =>
+                m.senderId === message.senderId &&
+                m.recipientId === message.recipientId &&
+                m.id?.startsWith("temp-"),
+            );
+            if (tempIndex !== -1) {
+              const updated = [...existing];
+              updated[tempIndex] = {
+                ...message,
+                timestamp: message.timestamp ?? new Date().toISOString(),
+              };
+              return { ...prev, [otherId]: updated };
+            }
+          }
+          const isViewing =
+            selectedUserRef.current?.slug === message.senderId &&
+            user?.slug === message.recipientId;
+          const incoming: ChatMessage = {
+            ...message,
+            timestamp: message.timestamp ?? new Date().toISOString(),
+            readByRecipient: isViewing ? true : message.readByRecipient,
+          };
+          if (isViewing) {
+            markConversationRead(message.senderId);
+          }
+          return {
+            ...prev,
+            [otherId]: [...existing, incoming],
+          };
+        });
+        return;
+      }
+
+      if (event.type === ChatNotificationType.MESSAGE_READ) {
+        setConversations((prev) =>
+          Object.fromEntries(
+            Object.entries(prev).map(([key, messages]) => [
+              key,
+              messages.map((message) =>
+                message.senderId === event.senderId &&
+                message.recipientId === event.recipientId
+                  ? { ...message, readByRecipient: true }
+                  : message,
+              ),
+            ]),
+          ),
+        );
+        return;
+      }
+
+      if (event.type === ChatNotificationType.MESSAGE_EDITED) {
+        setConversations((prev) =>
+          Object.fromEntries(
+            Object.entries(prev).map(([key, messages]) => [
+              key,
+              messages.map((message) =>
+                message.id === event.id
+                  ? {
+                      ...message,
+                      content: event.content ?? message.content,
+                      attachments: event.attachments ?? message.attachments,
+                      edited: true,
+                    }
+                  : message,
+              ),
+            ]),
+          ),
+        );
+        return;
+      }
+
+      if (event.type === ChatNotificationType.MESSAGE_DELETED && event.id) {
+        setConversations((prev) => removeMessageById(prev, event.id!));
+      }
+    },
+    [markConversationRead, user],
   );
 
   const { sendMessage } = useChatSocket({
@@ -103,6 +203,24 @@ const ChatPage: React.FC = () => {
         ...prev,
         [otherUser.slug]: data,
       }));
+      const hasUnreadIncoming = data.some(
+        (message) =>
+          message.senderId === otherUser.slug &&
+          message.recipientId === user.slug &&
+          !message.readByRecipient,
+      );
+      if (hasUnreadIncoming) {
+        markConversationRead(otherUser.slug);
+        setConversations((prev) => ({
+          ...prev,
+          [otherUser.slug]: (prev[otherUser.slug] ?? []).map((message) =>
+            message.senderId === otherUser.slug &&
+            message.recipientId === user.slug
+              ? { ...message, readByRecipient: true }
+              : message,
+          ),
+        }));
+      }
     } catch {
       showToast("We couldn't load the messages. Please try again.", "error");
     } finally {
@@ -135,6 +253,58 @@ const ChatPage: React.FC = () => {
         optimisticMessage,
       ],
     }));
+  };
+
+  const handleEdit = async (
+    messageId: string,
+    content: string,
+    attachments?: ChatAttachment[],
+  ) => {
+    if (!user) return;
+    try {
+      const updated = await editMessage(
+        messageId,
+        content,
+        user.slug,
+        attachments,
+      );
+      if (!selectedUser) return;
+      setConversations((prev) => ({
+        ...prev,
+        [selectedUser.slug]: (prev[selectedUser.slug] ?? []).map((message) =>
+          message.id === messageId
+            ? {
+                ...message,
+                content: updated.content,
+                attachments: updated.attachments,
+                edited: true,
+              }
+            : message,
+        ),
+      }));
+    } catch (error) {
+      showToast(getApiError(error), "error");
+    }
+  };
+
+  const handleDeleteForMe = async (messageId: string) => {
+    if (!user) return;
+    try {
+      await deleteMessageForMe(messageId, user.slug);
+      setConversations((prev) => removeMessageById(prev, messageId));
+    } catch (error) {
+      showToast(getApiError(error), "error");
+    }
+  };
+
+  const handleDeleteForEveryone = async (messageId: string) => {
+    if (!user) return;
+    try {
+      await deleteMessageForEveryone(messageId, user.slug);
+      setConversations((prev) => removeMessageById(prev, messageId));
+    } catch (error) {
+      showToast(getApiError(error), "error");
+    }
   };
 
   const handleLogout = async () => {
@@ -177,6 +347,9 @@ const ChatPage: React.FC = () => {
             messages={selectedMessages}
             loading={conversationLoading}
             onSend={handleSend}
+            onEdit={handleEdit}
+            onDeleteForMe={handleDeleteForMe}
+            onDeleteForEveryone={handleDeleteForEveryone}
           />
         ) : (
           <ChatEmptyState />

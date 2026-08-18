@@ -14,6 +14,13 @@ export interface ChatWindowProps {
   messages: ChatMessage[];
   loading: boolean;
   onSend: (content: string, attachments?: ChatAttachment[]) => void;
+  onEdit: (
+    messageId: string,
+    content: string,
+    attachments?: ChatAttachment[],
+  ) => void;
+  onDeleteForMe: (messageId: string) => void;
+  onDeleteForEveryone: (messageId: string) => void;
 }
 
 export interface EmojiPickerProps {

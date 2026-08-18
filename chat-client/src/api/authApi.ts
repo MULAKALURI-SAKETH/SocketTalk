@@ -92,3 +92,48 @@ export const uploadImage = async (file: File): Promise<ChatAttachment> => {
   );
   return response.data;
 };
+
+export const markMessagesAsRead = async (
+  senderId: string,
+  recipientId: string,
+): Promise<ChatMessage> => {
+  const response = await axios.post<ChatMessage>(
+    `${API_BASE_URL}/messages/${senderId}/${recipientId}/read`,
+  );
+  return response.data;
+};
+
+export const editMessage = async (
+  messageId: string,
+  content: string,
+  userId: string,
+  attachments?: ChatAttachment[],
+): Promise<ChatMessage> => {
+  const response = await axios.put<ChatMessage>(
+    `${API_BASE_URL}/messages/${messageId}`,
+    { content, attachments, userId },
+  );
+  return response.data;
+};
+
+export const deleteMessageForMe = async (
+  messageId: string,
+  userId: string,
+): Promise<ChatMessage> => {
+  const response = await axios.delete<ChatMessage>(
+    `${API_BASE_URL}/messages/${messageId}/for-me`,
+    { params: { userId } },
+  );
+  return response.data;
+};
+
+export const deleteMessageForEveryone = async (
+  messageId: string,
+  userId: string,
+): Promise<ChatMessage> => {
+  const response = await axios.delete<ChatMessage>(
+    `${API_BASE_URL}/messages/${messageId}/for-everyone`,
+    { params: { userId } },
+  );
+  return response.data;
+};

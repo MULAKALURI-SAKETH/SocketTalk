@@ -1,7 +1,7 @@
 import { Client } from "@stomp/stompjs";
 import { useCallback, useEffect, useRef } from "react";
 import SockJS from "sockjs-client/dist/sockjs";
-import type { ChatAttachment, ChatMessage } from "../types";
+import type { ChatAttachment, ChatEvent } from "../types";
 import { IChatSocketOptions } from "../interfaces/IUser";
 
 const SOCKET_URL = import.meta.env.VITE_WS_URL;
@@ -26,7 +26,7 @@ export const useChatSocket = ({ username, onMessage }: IChatSocketOptions) => {
     client.onConnect = () => {
       client.subscribe("/user/queue/messages", (frame) => {
         try {
-          const payload = JSON.parse(frame.body) as ChatMessage;
+          const payload = JSON.parse(frame.body) as ChatEvent;
           onMessageRef.current(payload);
         } catch {
           // Ignore malformed frames
@@ -58,6 +58,9 @@ export const useChatSocket = ({ username, onMessage }: IChatSocketOptions) => {
           recipientId,
           content,
           attachments,
+          readByRecipient: false,
+          edited: false,
+          deletedForEveryone: false,
         }),
       });
       return true;

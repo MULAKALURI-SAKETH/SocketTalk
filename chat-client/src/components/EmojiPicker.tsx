@@ -5,7 +5,7 @@ import { EMOJIS } from "../constants/messageConstants";
 const EmojiPicker: React.FC<EmojiPickerProps> = ({ onSelect, onClose }) => {
   const [query, setQuery] = useState("");
 
-  const filtered = useMemo(() => {
+  const filteredEmojis = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     if (!normalized) return EMOJIS;
     return EMOJIS.filter((item) => item.label.includes(normalized));
@@ -13,6 +13,7 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ onSelect, onClose }) => {
 
   return (
     <div
+      onMouseDown={(event) => event.stopPropagation()}
       className="absolute bottom-14 left-0 z-20 w-72 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl"
       role="dialog"
       aria-label="Emoji picker"
@@ -28,13 +29,13 @@ const EmojiPicker: React.FC<EmojiPickerProps> = ({ onSelect, onClose }) => {
         />
       </div>
       <div className="max-h-56 overflow-y-auto p-2">
-        {filtered.length === 0 ? (
+        {filteredEmojis.length === 0 ? (
           <p className="py-4 text-center text-sm text-slate-400">
             No emojis found.
           </p>
         ) : (
           <div className="grid grid-cols-8 gap-1">
-            {filtered.map((item) => (
+            {filteredEmojis.map((item) => (
               <button
                 key={item.emoji}
                 type="button"

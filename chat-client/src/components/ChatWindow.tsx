@@ -3,14 +3,15 @@ import type { ChatAttachment, ChatMessage, ChatUser } from "../types";
 import { ChatWindowProps } from "../interfaces/IChat";
 import { useToast } from "../context/ToastContext";
 import { uploadImage } from "../api/authApi";
-import { resolveMediaUrl } from "../utils/mediaUtils";
-import EmojiPicker from "./EmojiPicker";
-import { MessageImage } from "./MessageImage";
 import {
-  FileAttachment,
+  resolveMediaUrl,
   formatFileSize,
   isImageAttachment,
-} from "./FileAttachment";
+} from "../utils/mediaUtils";
+import EmojiPicker from "./EmojiPicker";
+import { MessageImage } from "./MessageImage";
+import DoubleTicks from "./DoubleTicks";
+import { FileAttachment } from "./FileAttachment";
 
 const formatTime = (timestamp?: string): string => {
   if (!timestamp) return "";
@@ -25,16 +26,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   messages,
   loading,
   onSend,
+  onEdit,
+  onDeleteForMe,
+  onDeleteForEveryone,
 }) => {
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editAttachments, setEditAttachments] = useState<ChatAttachment[]>([]);
+  const [editEmojiOpen, setEditEmojiOpen] = useState(false);
+  const [editUploading, setEditUploading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<ChatMessage | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const textInputRef = useRef<HTMLInputElement | null>(null);
+  const editInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const editFileInputRef = useRef<HTMLInputElement | null>(null);
   const { showToast } = useToast();
 
   useEffect(() => {
@@ -102,6 +115,82 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setText((prev) => prev + emoji);
     textInputRef.current?.focus();
     setEmojiOpen(false);
+  };
+
+  const startEditing = (message: ChatMessage) => {
+    setEditingMessageId(message.id ?? null);
+    setEditText(message.content);
+    setEditAttachments(message.attachments ?? []);
+    setEditEmojiOpen(false);
+    setTimeout(() => editInputRef.current?.focus(), 0);
+  };
+
+  const cancelEditing = () => {
+    setEditingMessageId(null);
+    setEditText("");
+    setEditAttachments([]);
+    setEditEmojiOpen(false);
+  };
+
+  const saveEditing = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmed = editText.trim();
+    if (!editingMessageId) return;
+    if (!trimmed && editAttachments.length === 0) return;
+    onEdit(editingMessageId, trimmed, editAttachments);
+    cancelEditing();
+  };
+
+  const handleEditFileSelected = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+
+    setEditUploading(true);
+    try {
+      const attachment = await uploadImage(file);
+      setEditAttachments((prev) => [...prev, attachment]);
+    } catch {
+      showToast("File couldn't be uploaded. Please try again.", "error");
+    } finally {
+      setEditUploading(false);
+    }
+  };
+
+  const removeEditAttachment = (url: string) => {
+    setEditAttachments((prev) =>
+      prev.filter((attachment) => attachment.url !== url),
+    );
+  };
+
+  const handleEditEmojiSelect = (emoji: string) => {
+    setEditText((prev) => prev + emoji);
+    editInputRef.current?.focus();
+    setEditEmojiOpen(false);
+  };
+
+  const doDeleteForMe = async () => {
+    if (!deleteTarget?.id) return;
+    setDeleteBusy(true);
+    try {
+      await onDeleteForMe(deleteTarget.id);
+      setDeleteTarget(null);
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
+  const doDeleteForEveryone = async () => {
+    if (!deleteTarget?.id) return;
+    setDeleteBusy(true);
+    try {
+      await onDeleteForEveryone(deleteTarget.id);
+      setDeleteTarget(null);
+    } finally {
+      setDeleteBusy(false);
+    }
   };
 
   const UPLOAD_URL_PATTERN = /^\/uploads\/.+/;
@@ -186,12 +275,67 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           <div className="flex flex-col gap-2">
             {messages.map((message) => {
               const isMine = message.senderId === mySlug;
+              const isPending = message.id?.startsWith("temp-");
+              const canShowActions = isMine && !isPending;
+              const isEditable = canShowActions;
+              const isEditing = editingMessageId === message.id;
               return (
                 <div
                   key={message.id ?? `${message.senderId}-${message.timestamp}`}
                   className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                 >
-                  <div className="flex max-w-[70%] flex-col">
+                  <div className="group relative flex max-w-[70%] flex-col">
+                    {canShowActions && !isEditing && (
+                      <div className="absolute -top-3 right-1 z-10 hidden items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5 shadow-md group-hover:flex">
+                        {isEditable && (
+                          <button
+                            type="button"
+                            onClick={() => startEditing(message)}
+                            aria-label="Edit message"
+                            title="Edit"
+                            className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-indigo-600"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth={1.8}
+                              stroke="currentColor"
+                              className="h-4 w-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                              />
+                            </svg>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(message)}
+                          aria-label="Delete message"
+                          title="Delete"
+                          className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-rose-50 hover:text-rose-600"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={1.8}
+                            stroke="currentColor"
+                            className="h-4 w-4"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+
                     <div
                       className={`rounded-2xl px-4 py-2 text-sm ${
                         isMine
@@ -199,15 +343,185 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                           : "bg-white text-slate-800 ring-1 ring-slate-200"
                       }`}
                     >
-                      {renderMessageContent(message)}
+                      {isEditing ? (
+                        <form
+                          onSubmit={saveEditing}
+                          className="flex flex-col gap-2"
+                        >
+                          {editAttachments.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {editAttachments.map((attachment) => (
+                                <div
+                                  key={attachment.url}
+                                  className="group relative"
+                                >
+                                  {isImageAttachment(attachment.contentType) ? (
+                                    <img
+                                      src={resolveMediaUrl(attachment.url)}
+                                      alt={
+                                        attachment.fileName || "Edited image"
+                                      }
+                                      className="h-16 w-16 rounded-lg object-cover"
+                                    />
+                                  ) : (
+                                    <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth={1.8}
+                                        stroke="currentColor"
+                                        className="h-6 w-6"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+                                        />
+                                      </svg>
+                                    </span>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeEditAttachment(attachment.url)
+                                    }
+                                    aria-label={`Remove ${attachment.fileName}`}
+                                    className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-slate-500 hover:bg-rose-100 hover:text-rose-600"
+                                  >
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      strokeWidth={2}
+                                      stroke="currentColor"
+                                      className="h-3 w-3"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M6 18L18 6M6 6l12 12"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <textarea
+                            ref={editInputRef}
+                            value={editText}
+                            onChange={(event) =>
+                              setEditText(event.target.value)
+                            }
+                            rows={2}
+                            aria-label="Edit message"
+                            className="w-full resize-none rounded-md border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+                          />
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="relative flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  editFileInputRef.current?.click()
+                                }
+                                disabled={editUploading}
+                                title="Add an image or file"
+                                aria-label="Add an image or file"
+                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {editUploading ? (
+                                  <span
+                                    className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600"
+                                    role="status"
+                                    aria-label="Uploading"
+                                  />
+                                ) : (
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth={1.8}
+                                    stroke="currentColor"
+                                    className="h-4 w-4"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-5.409-9.909h.008v.008h-.008V6.75zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0zM3.75 21h16.5A1.5 1.5 0 0 0 21.75 19.5V4.5A1.5 1.5 0 0 0 20.25 3H3.75A1.5 1.5 0 0 0 2.25 4.5v15A1.5 1.5 0 0 0 3.75 21z"
+                                    />
+                                  </svg>
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditEmojiOpen(true)}
+                                title="Add an emoji"
+                                aria-label="Add an emoji"
+                                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-indigo-600"
+                              >
+                                <span className="text-base leading-none">
+                                  😊
+                                </span>
+                              </button>
+                              {editEmojiOpen && (
+                                <EmojiPicker
+                                  onSelect={handleEditEmojiSelect}
+                                  onClose={() => setEditEmojiOpen(false)}
+                                />
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={cancelEditing}
+                                className="rounded-md px-3 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="submit"
+                                disabled={
+                                  !editText.trim() &&
+                                  editAttachments.length === 0
+                                }
+                                className="rounded-md bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                          <input
+                            ref={editFileInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,application/pdf"
+                            onChange={(event) =>
+                              void handleEditFileSelected(event)
+                            }
+                            className="hidden"
+                          />
+                        </form>
+                      ) : (
+                        <>
+                          {renderMessageContent(message)}
+                          <span
+                            className={`mt-1 flex items-center justify-end gap-1 ${
+                              isMine ? "text-white/70" : "text-slate-400"
+                            }`}
+                          >
+                            <span className="text-[10px] leading-none">
+                              {formatTime(message.timestamp)}
+                              {message.edited && " • edited"}
+                            </span>
+                            {isMine && (
+                              <DoubleTicks
+                                read={Boolean(message.readByRecipient)}
+                              />
+                            )}
+                          </span>
+                        </>
+                      )}
                     </div>
-                    <p
-                      className={`mt-1 px-1 text-xs text-slate-400 ${
-                        isMine ? "self-end text-right" : "self-start text-left"
-                      }`}
-                    >
-                      {formatTime(message.timestamp)}
-                    </p>
                   </div>
                 </div>
               );
@@ -398,6 +712,54 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           />
         </div>
       </form>
+
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+          onClick={() => setDeleteTarget(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-slate-800">
+              Delete message?
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {deleteTarget.readByRecipient
+                ? "This message has already been read, so it can only be deleted for you."
+                : "Deleting for everyone removes this message and its files for both of you."}
+            </p>
+            <div className="mt-5 flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={deleteBusy}
+                onClick={() => void doDeleteForMe()}
+                className="w-full rounded-lg bg-slate-100 px-4 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Delete for me
+              </button>
+              {!deleteTarget.readByRecipient && (
+                <button
+                  type="button"
+                  disabled={deleteBusy}
+                  onClick={() => void doDeleteForEveryone()}
+                  className="w-full rounded-lg bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Delete for everyone
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

@@ -1,4 +1,4 @@
-import { ChatMessage } from "../types";
+import { ChatEvent } from "../types";
 
 export enum IUserStatus {
   ONLINE = "ONLINE",
@@ -13,5 +13,5 @@ export interface IUser {
 
 export interface IChatSocketOptions {
   username: string | undefined;
-  onMessage: (message: ChatMessage) => void;
+  onMessage: (event: ChatEvent) => void;
 }

@@ -85,7 +85,12 @@ public class ChatMessageService {
         return readMessages.isEmpty() ? null : readMessages.get(readMessages.size() - 1);
     }
 
-    public ChatMessage editMessage(String messageId, String newContent, String editorId) {
+    public ChatMessage editMessage(
+            String messageId,
+            String newContent,
+            String editorId,
+            List<ChatAttachment> newAttachments
+    ) {
         ChatMessage message = findById(messageId);
         if (!editorId.equals(message.getSenderId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the sender can edit this message.");
@@ -93,16 +98,28 @@ public class ChatMessageService {
         if (message.isDeletedForEveryone()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "This message has been deleted.");
         }
-        if (message.isReadByRecipient()) {
-            throw new ResponseStatusException(
-                    HttpStatus.CONFLICT,
-                    "This message has already been read, so it can no longer be edited."
-            );
+        boolean hasContent = newContent != null && !newContent.isBlank();
+        boolean hasAttachments = newAttachments != null && !newAttachments.isEmpty();
+        if (!hasContent && !hasAttachments) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be empty.");
         }
-        if (newContent == null || newContent.isBlank()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message content cannot be empty.");
+        if (newAttachments != null && message.getAttachments() != null) {
+            for (ChatAttachment old : message.getAttachments()) {
+                boolean kept = newAttachments.stream()
+                        .anyMatch(attachment -> old.getUrl().equals(attachment.getUrl()));
+                if (!kept) {
+                    try {
+                        uploadService.deleteByUrl(old.getUrl());
+                    } catch (RuntimeException e) {
+                        log.error("Failed to delete uploaded file {}", old.getUrl(), e);
+                    }
+                }
+            }
         }
-        message.setContent(newContent);
+        message.setContent(newContent == null ? "" : newContent);
+        if (newAttachments != null) {
+            message.setAttachments(newAttachments);
+        }
         message.setEdited(true);
         return repository.save(message);
     }

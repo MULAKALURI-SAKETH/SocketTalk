@@ -104,10 +104,10 @@ class ChatControllerTest {
         ChatMessage edited = ChatMessage.builder()
                 .id("m1").senderId("alice").recipientId("bob")
                 .content("Hello edited").edited(true).build();
-        when(chatMessageService.editMessage("m1", "Hello edited", "alice")).thenReturn(edited);
+        when(chatMessageService.editMessage("m1", "Hello edited", "alice", null)).thenReturn(edited);
 
         ResponseEntity<ChatMessage> response =
-                chatController.editMessage("m1", new EditMessageRequest("Hello edited", null), "token-123");
+                chatController.editMessage("m1", new EditMessageRequest("Hello edited", null, null), "token-123");
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(response.getBody()).isSameAs(edited);

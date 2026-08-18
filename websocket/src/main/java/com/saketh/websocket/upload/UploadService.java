@@ -78,6 +78,36 @@ public class UploadService {
         );
     }
 
+    public void deleteByUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return;
+        }
+        String relative = url.startsWith("/uploads/")
+                ? url.substring("/uploads/".length())
+                : url;
+        Path target = this.uploadDir.resolve(relative).normalize();
+        if (!target.startsWith(this.uploadDir)) {
+            log.warn("Refusing to delete path outside the upload directory: {}", url);
+            return;
+        }
+        try {
+            Files.deleteIfExists(target);
+            Path parent = target.getParent();
+            if (parent != null) {
+                try (var stream = Files.list(parent)) {
+                    if (stream.findAny().isEmpty()) {
+                        Files.deleteIfExists(parent);
+                    }
+                }
+            }
+        } catch (IOException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "We couldn't delete that file. Please try again."
+            );
+        }
+    }
+
     private String sanitizeFilename(String originalFilename, String contentType) {
         String name = originalFilename;
         if (name == null || name.isBlank()) {

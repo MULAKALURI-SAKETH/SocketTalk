@@ -6,14 +6,14 @@ A full-stack realtime chat application. The backend is a Spring Boot WebSocket s
 
 ```
 SocketTalk/
-├── websocket/                  # Spring Boot backend
+├── talkloop-server/            # Spring Boot backend
 │   ├── docker-compose.yml      # MongoDB + mongo-express
-│   └── src/main/java/com/saketh/websocket/
+│   └── src/main/java/com/saketh/talkloop/
 │       ├── chat/               # chat messages, notifications, STOMP handling
 │       ├── chatroom/           # chat room grouping (deterministic chat ids)
 │       ├── config/             # WebSocket broker, CORS, user interceptor
 │       └── user/               # registration, login, logout, presence
-└── chat-client/                # React + TypeScript frontend (Vite)
+└── talkloop-client/            # React + TypeScript frontend (Vite)
     └── src/
         ├── api/                # REST calls to the backend
         ├── components/         # chat window, sidebar, protected route, etc.
@@ -24,13 +24,13 @@ SocketTalk/
 
 ## Tech stack
 
-### Backend (`websocket/`)
+### Backend (`talkloop-server/`)
 - Java 17, Spring Boot, Maven
 - Spring WebSocket with STOMP (SockJS endpoint at `/ws`)
 - Spring Data MongoDB (persistence)
 - Spring Security Crypto (BCrypt password hashing)
 
-### Frontend (`chat-client/`)
+### Frontend (`talkloop-client/`)
 - React 19 + TypeScript
 - Vite (with `/auth`, `/users`, `/messages`, `/ws` dev proxy to port 8088)
 - Tailwind CSS 4
@@ -63,7 +63,7 @@ SocketTalk/
 ### 1. Start MongoDB
 
 ```bash
-cd websocket
+cd talkloop-server
 docker compose up -d
 ```
 
@@ -72,7 +72,7 @@ This starts MongoDB on `localhost:27017` and mongo-express on `localhost:8081`.
 ### 2. Run the backend
 
 ```bash
-cd websocket
+cd talkloop-server
 ./mvnw spring-boot:run
 ```
 
@@ -81,7 +81,7 @@ The server runs on port `8088`. Connection details live in `src/main/resources/a
 ### 3. Run the frontend
 
 ```bash
-cd chat-client
+cd talkloop-client
 npm install
 npm run dev
 ```
@@ -92,7 +92,7 @@ In development, Vite proxies `/users`, `/messages`, `/auth`, and `/ws` to `http:
 
 ## Configuration
 
-### Frontend environment variables (`chat-client/.env`)
+### Frontend environment variables (`talkloop-client/.env`)
 
 | Variable             | Default                  | Purpose                              |
 | -------------------- | ------------------------ | ------------------------------------ |
@@ -142,14 +142,14 @@ Connect to the SockJS endpoint `/ws` (with login header for the principal).
 Backend tests (Spring Boot test slices) can be run with:
 
 ```bash
-cd websocket
+cd talkloop-server
 ./mvnw test
 ```
 
 Frontend unit tests (Jest + Testing Library) can be run with:
 
 ```bash
-cd chat-client
+cd talkloop-client
 npm test
 ```
 

@@ -1,0 +1,20 @@
+spring:
+  config:
+    import: 'optional:file:.env[.properties]'
+  application:
+    name: talkloop-server
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/chat_app?authSource=admin}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+
+server:
+  port: 8088
+
+app:
+  auth:
+    cookie-secure: false
+  upload:
+    dir: uploads

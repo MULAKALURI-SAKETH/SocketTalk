@@ -3,6 +3,7 @@ import { ToastProvider } from "./context/ToastContext";
 import { Navigate, Route, Routes } from "react-router-dom";
 import LoginForm from "./pages/LoginForm/LoginForm";
 import RegisterUser from "./pages/RegisterUser/RegisterUser";
+import HomePage from "./pages/HomePage/HomePage";
 import ChatPage from "./pages/ChatPage/ChatPage";
 import LogoutPage from "./pages/LogoutPage/LogoutPage";
 import AdminDashboard from "./pages/MessageApp/AdminDashboard";
@@ -25,7 +26,7 @@ const AppRoutes: React.FC = () => {
             isLoggedIn ? (
               <Navigate to="/chat-home" replace />
             ) : (
-              <Navigate to="/login" replace />
+              <HomePage />
             )
           }
         />

@@ -13,19 +13,9 @@ import {
   login as loginRequest,
   getCurrentUser,
   getApiError,
-  type AuthCredentials,
 } from '../api/client'
+import type { AuthCredentials, AuthContextType } from '../interfaces/IAuth'
 import { ACTIVITY_EVENTS, INACTIVITY_TIMEOUT_MS } from '../constants/auth'
-
-interface AuthContextType {
-  isLoggedIn: boolean
-  isInitializing: boolean
-  user: ChatUser | null
-  login: (credentials: AuthCredentials) => Promise<ChatUser>
-  logout: () => void
-  loginError: string | null
-  clearLoginError: () => void
-}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 

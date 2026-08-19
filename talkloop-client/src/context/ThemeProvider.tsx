@@ -14,13 +14,7 @@ import {
 } from '@mui/material'
 import { useAuth } from './AuthContext'
 import { updatePreferences } from '../api/client'
-
-type Theme = 'light' | 'dark'
-
-interface ThemeContextValue {
-  theme: Theme
-  toggleTheme: () => void
-}
+import type { Theme, ThemeContextValue } from '../interfaces/IAuth'
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined)
 

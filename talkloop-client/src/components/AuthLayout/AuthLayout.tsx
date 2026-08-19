@@ -3,18 +3,12 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import IconButton from '@mui/material/IconButton'
 import { Link } from 'react-router-dom'
-import BrandLogo from './BrandLogo'
-import { useTheme } from '../context/ThemeProvider'
+import BrandLogo from '../BrandLogo/BrandLogo'
+import { useTheme } from '../../context/ThemeProvider'
 import LightMode from '@mui/icons-material/LightMode'
 import DarkMode from '@mui/icons-material/DarkMode'
+import { FEATURE_BLURBS } from '../../constants/home'
 import styles from './AuthLayout.module.css'
-
-const FEATURE_BLURBS = [
-  'Real-time messages the moment you hit send.',
-  'Read receipts, edits and deletes — just like WhatsApp.',
-  'Share images and files in a single tap.',
-  'Your conversations survive server restarts.',
-]
 
 const AuthLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { theme, toggleTheme } = useTheme()

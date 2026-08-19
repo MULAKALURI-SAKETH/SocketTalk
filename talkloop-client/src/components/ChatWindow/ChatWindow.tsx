@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React from 'react'
 import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Avatar from '@mui/material/Avatar'
@@ -21,27 +21,20 @@ import Edit from '@mui/icons-material/Edit'
 import Delete from '@mui/icons-material/Delete'
 import Close from '@mui/icons-material/Close'
 import InsertDriveFile from '@mui/icons-material/InsertDriveFile'
-import type { ChatAttachment, ChatMessage, ChatUser } from '../types'
-import { ChatWindowProps } from '../interfaces/IChat'
-import { useToast } from '../context/ToastProvider'
-import { uploadImage } from '../api/client'
+import type { ChatAttachment, ChatMessage } from '../../types'
+import { ChatWindowProps } from '../../interfaces/IChat'
 import {
   resolveMediaUrl,
   formatFileSize,
   isImageAttachment,
-} from '../utils/media'
-import EmojiPicker from './EmojiPicker'
-import { MessageImage } from './MessageImage'
-import MessageTicks from './MessageTicks'
-import { FileAttachment } from './FileAttachment'
+} from '../../utils/media'
+import { formatTime } from '../../utils/time'
+import useChatWindow from '../../hooks/useChatWindow'
+import EmojiPicker from '../EmojiPicker/EmojiPicker'
+import { MessageImage } from '../MessageImage/MessageImage'
+import MessageTicks from '../MessageTicks/MessageTicks'
+import { FileAttachment } from '../FileAttachment/FileAttachment'
 import styles from './ChatWindow.module.css'
-
-const formatTime = (timestamp?: string): string => {
-  if (!timestamp) return ''
-  const date = new Date(timestamp)
-  if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
   otherUser,
@@ -53,166 +46,51 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   onDeleteForMe,
   onDeleteForEveryone,
 }) => {
-  const [text, setText] = useState('')
-  const [attachments, setAttachments] = useState<ChatAttachment[]>([])
-  const [attachMenuAnchor, setAttachMenuAnchor] = useState<HTMLElement | null>(
-    null,
-  )
-  const [emojiOpen, setEmojiOpen] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
-  const [editText, setEditText] = useState('')
-  const [editAttachments, setEditAttachments] = useState<ChatAttachment[]>([])
-  const [editEmojiOpen, setEditEmojiOpen] = useState(false)
-  const [editUploading, setEditUploading] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<ChatMessage | null>(null)
-  const [deleteBusy, setDeleteBusy] = useState(false)
-  const bottomRef = useRef<HTMLDivElement | null>(null)
-  const fileInputRef = useRef<HTMLInputElement | null>(null)
-  const textInputRef = useRef<HTMLInputElement | null>(null)
-  const editInputRef = useRef<HTMLTextAreaElement | null>(null)
-  const editFileInputRef = useRef<HTMLInputElement | null>(null)
-  const { showToast } = useToast()
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!(event.target as HTMLElement).closest('[data-emoji-picker]')) {
-        setEmojiOpen(false)
-        setEditEmojiOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const canSend = text.trim().length > 0 || attachments.length > 0
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const trimmed = text.trim()
-    if (!canSend) return
-    onSend(trimmed, attachments)
-    setText('')
-    setAttachments([])
-  }
-
-  const openEmojiPicker = () => {
-    setAttachMenuAnchor(null)
-    setEmojiOpen(true)
-  }
-
-  const handleFileSelected = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-
-    setUploading(true)
-    setAttachMenuAnchor(null)
-    try {
-      const attachment = await uploadImage(file)
-      setAttachments((prev) => [...prev, attachment])
-    } catch {
-      showToast("We couldn't upload that file. Please try again.", 'error')
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const removeAttachment = (url: string) => {
-    setAttachments((prev) =>
-      prev.filter((attachment) => attachment.url !== url),
-    )
-  }
-
-  const handleEmojiSelect = (emoji: string) => {
-    setText((prev) => prev + emoji)
-    textInputRef.current?.focus()
-    setEmojiOpen(false)
-  }
-
-  const startEditing = (message: ChatMessage) => {
-    setEditingMessageId(message.id ?? null)
-    setEditText(message.content)
-    setEditAttachments(message.attachments ?? [])
-    setEditEmojiOpen(false)
-    setTimeout(() => editInputRef.current?.focus(), 0)
-  }
-
-  const cancelEditing = () => {
-    setEditingMessageId(null)
-    setEditText('')
-    setEditAttachments([])
-    setEditEmojiOpen(false)
-  }
-
-  const saveEditing = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const trimmed = editText.trim()
-    if (!editingMessageId) return
-    if (!trimmed && editAttachments.length === 0) return
-    onEdit(editingMessageId, trimmed, editAttachments)
-    cancelEditing()
-  }
-
-  const handleEditFileSelected = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-
-    setEditUploading(true)
-    try {
-      const attachment = await uploadImage(file)
-      setEditAttachments((prev) => [...prev, attachment])
-    } catch {
-      showToast("File couldn't be uploaded. Please try again.", 'error')
-    } finally {
-      setEditUploading(false)
-    }
-  }
-
-  const removeEditAttachment = (url: string) => {
-    setEditAttachments((prev) =>
-      prev.filter((attachment) => attachment.url !== url),
-    )
-  }
-
-  const handleEditEmojiSelect = (emoji: string) => {
-    setEditText((prev) => prev + emoji)
-    editInputRef.current?.focus()
-    setEditEmojiOpen(false)
-  }
-
-  const doDeleteForMe = async () => {
-    if (!deleteTarget?.id) return
-    setDeleteBusy(true)
-    try {
-      await onDeleteForMe(deleteTarget.id)
-      setDeleteTarget(null)
-    } finally {
-      setDeleteBusy(false)
-    }
-  }
-
-  const doDeleteForEveryone = async () => {
-    if (!deleteTarget?.id) return
-    setDeleteBusy(true)
-    try {
-      await onDeleteForEveryone(deleteTarget.id)
-      setDeleteTarget(null)
-    } finally {
-      setDeleteBusy(false)
-    }
-  }
-
-  const UPLOAD_URL_PATTERN = /^\/uploads\/.+/
+  const {
+    text,
+    setText,
+    attachments,
+    attachMenuAnchor,
+    setAttachMenuAnchor,
+    emojiOpen,
+    setEmojiOpen,
+    uploading,
+    editingMessageId,
+    editText,
+    setEditText,
+    editAttachments,
+    editEmojiOpen,
+    setEditEmojiOpen,
+    editUploading,
+    deleteTarget,
+    setDeleteTarget,
+    deleteBusy,
+    canSend,
+    bottomRef,
+    fileInputRef,
+    textInputRef,
+    editInputRef,
+    editFileInputRef,
+    handleSubmit,
+    openEmojiPicker,
+    handleFileSelected,
+    removeAttachment,
+    handleEmojiSelect,
+    startEditing,
+    cancelEditing,
+    saveEditing,
+    handleEditFileSelected,
+    removeEditAttachment,
+    handleEditEmojiSelect,
+    doDeleteForMe,
+    doDeleteForEveryone,
+  } = useChatWindow({
+    messages,
+    onSend,
+    onEdit,
+    onDeleteForMe,
+    onDeleteForEveryone,
+  })
 
   const renderAttachment = (attachment: ChatAttachment) => {
     if (isImageAttachment(attachment.contentType)) {
@@ -236,6 +114,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const renderMessageContent = (message: ChatMessage) => {
     const messageAttachments = message.attachments ?? []
     const hasAttachments = messageAttachments.length > 0
+    const UPLOAD_URL_PATTERN = /^\/uploads\/.+/
     const legacyUrl =
       !hasAttachments && UPLOAD_URL_PATTERN.test(message.content)
         ? message.content

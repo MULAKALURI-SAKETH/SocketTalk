@@ -1,16 +1,14 @@
 import axios from 'axios'
 import { LogoutRequest, ChatUser, ChatMessage, ChatAttachment } from '../types' // Import necessary types
+import type { AuthCredentials } from '../interfaces/IAuth'
+
+export type { AuthCredentials } from '../interfaces/IAuth'
 
 // Backend API base URL - configured via .env (VITE_API_BASE_URL)
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088'
 
 axios.defaults.withCredentials = true
-
-export interface AuthCredentials {
-  username: string
-  password: string
-}
 
 export const getApiError = (error: any): string => {
   if (axios.isAxiosError(error)) {

@@ -19,7 +19,8 @@ jest.unstable_mockModule('../api/client', () => ({
 
 const { getCurrentUser } = await import('../api/client')
 const { AuthProvider } = await import('../context/AuthContext')
-const { default: ProtectedRoute } = await import('../components/ProtectedRoute')
+const { default: ProtectedRoute } =
+  await import('../components/ProtectedRoute/ProtectedRoute')
 
 const mockedGetCurrentUser = jest.mocked(getCurrentUser)
 

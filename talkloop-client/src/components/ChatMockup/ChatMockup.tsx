@@ -3,7 +3,7 @@ import Box from '@mui/material/Box'
 import Paper from '@mui/material/Paper'
 import Avatar from '@mui/material/Avatar'
 import Typography from '@mui/material/Typography'
-import MessageTicks from './MessageTicks'
+import MessageTicks from '../MessageTicks/MessageTicks'
 import styles from './ChatMockup.module.css'
 
 const ChatMockup: React.FC = () => {

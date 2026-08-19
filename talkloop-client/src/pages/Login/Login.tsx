@@ -13,7 +13,7 @@ import Visibility from '@mui/icons-material/Visibility'
 import VisibilityOff from '@mui/icons-material/VisibilityOff'
 import { Link } from 'react-router-dom'
 import useLoginForm from '../../hooks/useLoginForm'
-import AuthLayout from '../../components/AuthLayout'
+import AuthLayout from '../../components/AuthLayout/AuthLayout'
 import styles from '../auth.module.css'
 
 const Login: React.FC = () => {
@@ -25,6 +25,7 @@ const Login: React.FC = () => {
     handleChange,
     handleLoginSubmit,
   } = useLoginForm()
+
   const [showPassword, setShowPassword] = useState(false)
 
   return (

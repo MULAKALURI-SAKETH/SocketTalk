@@ -1,27 +1,27 @@
-import { createContext, useContext, useRef, useState } from 'react'
+import { createContext, useContext, useCallback, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import Snackbar from '@mui/material/Snackbar'
 import Alert from '@mui/material/Alert'
+import type { ToastContextValue, ToastType } from '../interfaces/IAuth'
 
-type Toast = { message: string; type: 'success' | 'error' } | null
-const ToastContext = createContext<{
-  showToast: (message: string, type: 'success' | 'error') => void
-} | null>(null)
+type Toast = { message: string; type: ToastType } | null
+
+const ToastContext = createContext<ToastContextValue | null>(null)
 
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toast, setToast] = useState<Toast>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const showToast = (message: string, type: 'success' | 'error') => {
+  const showToast = useCallback((message: string, type: ToastType) => {
     if (timer.current) clearTimeout(timer.current)
     setToast({ message, type })
     timer.current = setTimeout(() => setToast(null), 3500)
-  }
+  }, [])
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (timer.current) clearTimeout(timer.current)
     setToast(null)
-  }
+  }, [])
 
   return (
     <ToastContext.Provider value={{ showToast }}>

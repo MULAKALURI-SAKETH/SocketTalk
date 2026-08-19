@@ -1,11 +1,6 @@
 import Box from '@mui/material/Box'
+import type { BrandLogoProps } from '../../interfaces/IComponent'
 import styles from './BrandLogo.module.css'
-
-interface BrandLogoProps {
-  withText?: boolean
-  whiteText?: boolean
-  className?: string
-}
 
 const BrandLogo: React.FC<BrandLogoProps> = ({
   withText = true,

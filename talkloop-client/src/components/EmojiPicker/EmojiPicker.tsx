@@ -5,8 +5,8 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import Tooltip from '@mui/material/Tooltip'
-import { EmojiPickerProps } from '../interfaces/IChat'
-import { EMOJIS } from '../constants/chat'
+import { EmojiPickerProps } from '../../interfaces/IChat'
+import { EMOJIS } from '../../constants/chat'
 import styles from './EmojiPicker.module.css'
 
 const EmojiPicker: React.FC<EmojiPickerProps> = ({ onSelect, onClose }) => {

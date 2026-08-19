@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import type { MessageImageProps } from '../../interfaces/IComponent'
 import styles from './MessageImage.module.css'
 
-export const MessageImage: React.FC<{ url: string }> = ({ url }) => {
+export const MessageImage: React.FC<MessageImageProps> = ({ url }) => {
   const [failed, setFailed] = useState(false)
 
   if (failed) {

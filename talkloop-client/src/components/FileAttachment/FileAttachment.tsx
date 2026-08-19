@@ -1,13 +1,14 @@
 import Box from '@mui/material/Box'
 import InsertDriveFile from '@mui/icons-material/InsertDriveFile'
-import { formatFileSize, resolveMediaUrl } from '../utils/media'
+import { formatFileSize, resolveMediaUrl } from '../../utils/media'
+import type { FileAttachmentProps } from '../../interfaces/IComponent'
 import styles from './FileAttachment.module.css'
 
-export const FileAttachment: React.FC<{
-  url: string
-  fileName: string
-  fileSize: number
-}> = ({ url, fileName, fileSize }) => {
+export const FileAttachment: React.FC<FileAttachmentProps> = ({
+  url,
+  fileName,
+  fileSize,
+}) => {
   return (
     <Box
       component="a"

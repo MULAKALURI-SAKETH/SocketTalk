@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
-import { useAuth } from '../context/AuthContext'
-import Spinner from './Spinner'
+import { useAuth } from '../../context/AuthContext'
+import Spinner from '../Spinner/Spinner'
 
 const ProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { isLoggedIn, isInitializing } = useAuth()

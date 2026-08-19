@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom'
 import useRegisterForm from '../../hooks/useRegisterForm'
 import { fields } from '../../constants/auth'
 import { IFormField } from '../../interfaces/IForm'
-import AuthLayout from '../../components/AuthLayout'
+import AuthLayout from '../../components/AuthLayout/AuthLayout'
 import styles from '../auth.module.css'
 
 const Register: React.FC = () => {

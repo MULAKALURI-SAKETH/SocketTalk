@@ -7,8 +7,8 @@ import Home from './pages/Home/Home'
 import Chat from './pages/Chat/Chat'
 import Logout from './pages/Logout/Logout'
 import AdminDashboard from './pages/Admin/AdminDashboard'
-import ProtectedRoute from './components/ProtectedRoute'
-import Spinner from './components/Spinner'
+import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute'
+import Spinner from './components/Spinner/Spinner'
 
 const AppRoutes: React.FC = () => {
   const { isLoggedIn, isInitializing } = useAuth()

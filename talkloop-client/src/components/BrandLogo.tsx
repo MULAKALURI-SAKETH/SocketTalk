@@ -1,22 +1,26 @@
-import React from "react";
+import Box from '@mui/material/Box'
+import styles from './BrandLogo.module.css'
 
 interface BrandLogoProps {
-  withText?: boolean;
-  className?: string;
+  withText?: boolean
+  whiteText?: boolean
+  className?: string
 }
 
 const BrandLogo: React.FC<BrandLogoProps> = ({
   withText = true,
-  className = "",
+  whiteText = false,
+  className,
 }) => {
   return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-md shadow-indigo-500/30">
+    <Box component="span" className={`${styles.root} ${className ?? ''}`}>
+      <Box component="span" className={styles.icon}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="currentColor"
-          className="h-5 w-5 text-white"
+          width={20}
+          height={20}
           aria-hidden="true"
         >
           <path
@@ -25,12 +29,13 @@ const BrandLogo: React.FC<BrandLogoProps> = ({
             clipRule="evenodd"
           />
         </svg>
-        <span className="absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-emerald-400 ring-2 ring-white dark:ring-slate-900">
+        <Box component="span" className={styles.badge}>
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
-            className="h-2 w-2 text-white"
+            width={8}
+            height={8}
             aria-hidden="true"
           >
             <path
@@ -39,15 +44,18 @@ const BrandLogo: React.FC<BrandLogoProps> = ({
               clipRule="evenodd"
             />
           </svg>
-        </span>
-      </span>
+        </Box>
+      </Box>
       {withText && (
-        <span className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+        <Box
+          component="span"
+          className={`${styles.text} ${whiteText ? styles.textWhite : ''}`}
+        >
           Talkloop
-        </span>
+        </Box>
       )}
-    </span>
-  );
-};
+    </Box>
+  )
+}
 
-export default BrandLogo;
+export default BrandLogo

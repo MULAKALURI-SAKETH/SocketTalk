@@ -6,122 +6,119 @@ import React, {
   useCallback,
   useRef,
   ReactNode,
-} from "react";
-import { useNavigate } from "react-router-dom";
-import type { ChatUser } from "../types";
+} from 'react'
+import { useNavigate } from 'react-router-dom'
+import type { ChatUser } from '../types'
 import {
   login as loginRequest,
   getCurrentUser,
   getApiError,
   type AuthCredentials,
-} from "../api/client";
-import {
-  ACTIVITY_EVENTS,
-  INACTIVITY_TIMEOUT_MS,
-} from "../constants/auth";
+} from '../api/client'
+import { ACTIVITY_EVENTS, INACTIVITY_TIMEOUT_MS } from '../constants/auth'
 
 interface AuthContextType {
-  isLoggedIn: boolean;
-  isInitializing: boolean;
-  user: ChatUser | null;
-  login: (credentials: AuthCredentials) => Promise<ChatUser>;
-  logout: () => void;
-  loginError: string | null;
-  clearLoginError: () => void;
+  isLoggedIn: boolean
+  isInitializing: boolean
+  user: ChatUser | null
+  login: (credentials: AuthCredentials) => Promise<ChatUser>
+  logout: () => void
+  loginError: string | null
+  clearLoginError: () => void
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
-  const [user, setUser] = useState<ChatUser | null>(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-  const [loginError, setLoginError] = useState<string | null>(null);
+  const [user, setUser] = useState<ChatUser | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isInitializing, setIsInitializing] = useState(true)
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
 
     getCurrentUser()
       .then((currentUser) => {
-        if (cancelled) return;
-        setUser(currentUser);
-        setIsLoggedIn(true);
+        if (cancelled) return
+        setUser(currentUser)
+        setIsLoggedIn(true)
       })
       .catch(() => {
-        if (cancelled) return;
-        setUser(null);
-        setIsLoggedIn(false);
+        if (cancelled) return
+        setUser(null)
+        setIsLoggedIn(false)
       })
       .finally(() => {
-        if (!cancelled) setIsInitializing(false);
-      });
+        if (!cancelled) setIsInitializing(false)
+      })
 
     return () => {
-      cancelled = true;
-    };
-  }, []);
+      cancelled = true
+    }
+  }, [])
 
   const login = useCallback(
     async (credentials: AuthCredentials): Promise<ChatUser> => {
-      setLoginError(null);
+      setLoginError(null)
       try {
-        const loggedInUser = await loginRequest(credentials);
-        setUser(loggedInUser);
-        setIsLoggedIn(true);
-        navigate("/chat-home", { replace: true }); // Navigate to chat-home after successful login
-        return loggedInUser;
+        const loggedInUser = await loginRequest(credentials)
+        setUser(loggedInUser)
+        setIsLoggedIn(true)
+        navigate('/chat-home', { replace: true }) // Navigate to chat-home after successful login
+        return loggedInUser
       } catch (error) {
-        setLoginError(getApiError(error));
-        throw error;
+        setLoginError(getApiError(error))
+        throw error
       }
     },
     [navigate],
-  );
+  )
 
   const logout = useCallback(() => {
-    setUser(null);
-    setIsLoggedIn(false);
-    navigate("/login", { replace: true });
-  }, [navigate]);
+    setUser(null)
+    setIsLoggedIn(false)
+    navigate('/login', { replace: true })
+  }, [navigate])
 
   const clearLoginError = useCallback(() => {
-    setLoginError(null);
-  }, []);
+    setLoginError(null)
+  }, [])
 
-  const logoutRef = useRef(logout);
-  logoutRef.current = logout;
+  const logoutRef = useRef(logout)
+  logoutRef.current = logout
 
   useEffect(() => {
     if (!isLoggedIn) {
-      return;
+      return
     }
 
-    let inactivityTimer: ReturnType<typeof setTimeout>;
+    let inactivityTimer: ReturnType<typeof setTimeout>
 
     const resetInactivityTimer = () => {
-      clearTimeout(inactivityTimer);
+      clearTimeout(inactivityTimer)
       inactivityTimer = setTimeout(
         () => logoutRef.current(),
         INACTIVITY_TIMEOUT_MS,
-      );
-    };
+      )
+    }
 
     ACTIVITY_EVENTS.forEach((event) =>
       window.addEventListener(event, resetInactivityTimer),
-    );
-    resetInactivityTimer();
+    )
+    resetInactivityTimer()
 
     return () => {
-      clearTimeout(inactivityTimer);
+      clearTimeout(inactivityTimer)
       ACTIVITY_EVENTS.forEach((event) =>
         window.removeEventListener(event, resetInactivityTimer),
-      );
-    };
-  }, [isLoggedIn]);
+      )
+    }
+  }, [isLoggedIn])
 
   return (
     <AuthContext.Provider
@@ -137,13 +134,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     >
       {children}
     </AuthContext.Provider>
-  );
-};
+  )
+}
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context;
-};
+  return context
+}

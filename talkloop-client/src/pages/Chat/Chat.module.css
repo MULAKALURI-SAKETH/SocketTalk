@@ -1,0 +1,11 @@
+.root {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--tl-action-hover);
+}
+
+.main {
+  flex: 1;
+  overflow: hidden;
+}

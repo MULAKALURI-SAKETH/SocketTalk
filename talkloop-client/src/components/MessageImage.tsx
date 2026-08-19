@@ -1,18 +1,26 @@
-import { useState } from "react";
+import { useState } from 'react'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import styles from './MessageImage.module.css'
 
 export const MessageImage: React.FC<{ url: string }> = ({ url }) => {
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState(false)
 
   if (failed) {
-    return <p className="text-sm text-slate-400">Image couldn't be loaded.</p>;
+    return (
+      <Typography variant="body2" className={styles.fallback}>
+        Image couldn't be loaded.
+      </Typography>
+    )
   }
 
   return (
-    <img
+    <Box
+      component="img"
       src={url}
       loading="lazy"
       onError={() => setFailed(true)}
-      className="max-h-72 max-w-full rounded-lg object-cover"
+      className={styles.image}
     />
-  );
-};
+  )
+}

@@ -14,12 +14,14 @@ import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequiredArgsConstructor
@@ -96,6 +98,19 @@ public class UserController {
                         "Session expired or invalid."
                 ));
         return ResponseEntity.ok(userService.findBySlug(username));
+    }
+
+    @PatchMapping("/auth/preferences")
+    public ResponseEntity<User> updatePreferences(
+            @RequestBody Map<String, String> preferences,
+            @CookieValue(value = SESSION_COOKIE_NAME, required = false) String sessionToken
+    ) {
+        String username = sessionService.findUserByToken(sessionToken)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED,
+                        "Session expired or invalid."
+                ));
+        return ResponseEntity.ok(userService.updatePreferences(username, preferences));
     }
 
     private ResponseCookie sessionCookie(String token) {

@@ -1,37 +1,20 @@
-import React from "react";
+import React from 'react'
+import DoneAll from '@mui/icons-material/DoneAll'
+import styles from './MessageTicks.module.css'
 
 interface MessageTicksProps {
-  read: boolean;
-  className?: string;
+  read: boolean
+  className?: string
 }
 
 const MessageTicks: React.FC<MessageTicksProps> = ({ read, className }) => {
-  const color = read ? "text-sky-300" : "text-slate-300";
+  const tickClass = read ? styles.read : styles.delivered
   return (
-    <svg
-      viewBox="0 0 20 12"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label={read ? "Read" : "Delivered"}
-      className={`h-3.5 w-5 shrink-0 ${color} ${className ?? ""}`}
-    >
-      <path
-        d="M1.5 4.5L5 7.5L11 1.5"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M6.5 4.5L10 7.5L16 1.5"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.55"
-      />
-    </svg>
-  );
-};
+    <DoneAll
+      aria-label={read ? 'Read' : 'Delivered'}
+      className={`${styles.tick} ${tickClass} ${className ?? ''}`}
+    />
+  )
+}
 
-export default MessageTicks;
+export default MessageTicks

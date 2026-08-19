@@ -1,20 +1,20 @@
-import { Navigate } from "react-router-dom";
-import type { ReactNode } from "react";
-import { useAuth } from "../context/AuthContext";
-import Spinner from "./Spinner";
+import { Navigate } from 'react-router-dom'
+import type { ReactNode } from 'react'
+import { useAuth } from '../context/AuthContext'
+import Spinner from './Spinner'
 
 const ProtectedRoute: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { isLoggedIn, isInitializing } = useAuth();
+  const { isLoggedIn, isInitializing } = useAuth()
 
   if (isInitializing) {
-    return <Spinner />;
+    return <Spinner />
   }
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace />
   }
 
-  return <>{children}</>;
-};
+  return <>{children}</>
+}
 
-export default ProtectedRoute;
+export default ProtectedRoute

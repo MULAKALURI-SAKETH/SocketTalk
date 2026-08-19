@@ -1,31 +1,31 @@
-import axios from "axios";
-import { LogoutRequest, ChatUser, ChatMessage, ChatAttachment } from "../types"; // Import necessary types
+import axios from 'axios'
+import { LogoutRequest, ChatUser, ChatMessage, ChatAttachment } from '../types' // Import necessary types
 
 // Backend API base URL - configured via .env (VITE_API_BASE_URL)
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8088";
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8088'
 
-axios.defaults.withCredentials = true;
+axios.defaults.withCredentials = true
 
 export interface AuthCredentials {
-  username: string;
-  password: string;
+  username: string
+  password: string
 }
 
 export const getApiError = (error: any): string => {
   if (axios.isAxiosError(error)) {
     // Check for a specific error message from the backend
     if (error.response && error.response.data && error.response.data.message) {
-      return error.response.data.message;
+      return error.response.data.message
     }
     if (error.response) {
-      return "Something went wrong. Please try again.";
+      return 'Something went wrong. Please try again.'
     }
-    return "We couldn't reach the server. Check your connection and try again.";
+    return "We couldn't reach the server. Check your connection and try again."
   }
   // Fallback for non-Axios errors
-  return "Something went wrong. Please try again.";
-};
+  return 'Something went wrong. Please try again.'
+}
 
 // Logs the user in and returns the persisted user record (slug, fullName, userStatus)
 export const login = async (
@@ -34,9 +34,9 @@ export const login = async (
   const response = await axios.post<ChatUser>(
     `${API_BASE_URL}/auth/login`,
     credentials,
-  );
-  return response.data;
-};
+  )
+  return response.data
+}
 
 // Registers a new user with a username and password
 export const register = async (
@@ -45,33 +45,33 @@ export const register = async (
   const response = await axios.post<ChatUser>(
     `${API_BASE_URL}/auth/register`,
     credentials,
-  );
-  return response.data;
-};
+  )
+  return response.data
+}
 
 // Restores the logged-in user by validating the HttpOnly session cookie
 export const getCurrentUser = async (): Promise<ChatUser> => {
-  const response = await axios.get<ChatUser>(`${API_BASE_URL}/auth/me`);
-  return response.data;
-};
+  const response = await axios.get<ChatUser>(`${API_BASE_URL}/auth/me`)
+  return response.data
+}
 
 // Returns every registered user (online and offline) for the chat sidebar
 export const getConnectedUsers = async (): Promise<{ data: ChatUser[] }> => {
-  const response = await axios.get<ChatUser[]>(`${API_BASE_URL}/users`);
-  return { data: response.data };
-};
+  const response = await axios.get<ChatUser[]>(`${API_BASE_URL}/users`)
+  return { data: response.data }
+}
 
 // Returns only users who are currently online (admin dashboard)
 export const getOnlineUsers = async (): Promise<{ data: ChatUser[] }> => {
-  const response = await axios.get<ChatUser[]>(`${API_BASE_URL}/users/online`);
-  return { data: response.data };
-};
+  const response = await axios.get<ChatUser[]>(`${API_BASE_URL}/users/online`)
+  return { data: response.data }
+}
 
 // New function to log out a specific user from the admin dashboard
 export const logoutUser = async (request: LogoutRequest) => {
-  const response = await axios.post(`${API_BASE_URL}/auth/logout`, request);
-  return response.data;
-};
+  const response = await axios.post(`${API_BASE_URL}/auth/logout`, request)
+  return response.data
+}
 
 export const getChatMessages = async (
   senderId: string,
@@ -79,19 +79,19 @@ export const getChatMessages = async (
 ): Promise<{ data: ChatMessage[] }> => {
   const response = await axios.get<ChatMessage[]>(
     `${API_BASE_URL}/messages/${senderId}/${recipientId}`,
-  );
-  return { data: response.data };
-};
+  )
+  return { data: response.data }
+}
 
 export const uploadImage = async (file: File): Promise<ChatAttachment> => {
-  const formData = new FormData();
-  formData.append("file", file);
+  const formData = new FormData()
+  formData.append('file', file)
   const response = await axios.post<ChatAttachment>(
     `${API_BASE_URL}/uploads`,
     formData,
-  );
-  return response.data;
-};
+  )
+  return response.data
+}
 
 export const markMessagesAsRead = async (
   senderId: string,
@@ -99,9 +99,9 @@ export const markMessagesAsRead = async (
 ): Promise<ChatMessage> => {
   const response = await axios.post<ChatMessage>(
     `${API_BASE_URL}/messages/${senderId}/${recipientId}/read`,
-  );
-  return response.data;
-};
+  )
+  return response.data
+}
 
 export const editMessage = async (
   messageId: string,
@@ -112,9 +112,9 @@ export const editMessage = async (
   const response = await axios.put<ChatMessage>(
     `${API_BASE_URL}/messages/${messageId}`,
     { content, attachments, userId },
-  );
-  return response.data;
-};
+  )
+  return response.data
+}
 
 export const deleteMessageForMe = async (
   messageId: string,
@@ -123,9 +123,9 @@ export const deleteMessageForMe = async (
   const response = await axios.delete<ChatMessage>(
     `${API_BASE_URL}/messages/${messageId}/for-me`,
     { params: { userId } },
-  );
-  return response.data;
-};
+  )
+  return response.data
+}
 
 export const deleteMessageForEveryone = async (
   messageId: string,
@@ -134,6 +134,16 @@ export const deleteMessageForEveryone = async (
   const response = await axios.delete<ChatMessage>(
     `${API_BASE_URL}/messages/${messageId}/for-everyone`,
     { params: { userId } },
-  );
-  return response.data;
-};
+  )
+  return response.data
+}
+
+export const updatePreferences = async (
+  preferences: Record<string, string>,
+): Promise<ChatUser> => {
+  const response = await axios.patch<ChatUser>(
+    `${API_BASE_URL}/auth/preferences`,
+    preferences,
+  )
+  return response.data
+}

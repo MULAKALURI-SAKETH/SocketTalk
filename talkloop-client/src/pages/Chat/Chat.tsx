@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useAuth } from "../../context/AuthContext";
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import Box from '@mui/material/Box'
+import { useAuth } from '../../context/AuthContext'
 import {
   getChatMessages,
   getConnectedUsers,
@@ -9,35 +10,36 @@ import {
   deleteMessageForMe,
   editMessage,
   getApiError,
-} from "../../api/client";
-import { useToast } from "../../context/ToastProvider";
+} from '../../api/client'
+import { useToast } from '../../context/ToastProvider'
 import type {
   ChatMessage,
   ChatUser,
   ChatAttachment,
   ChatEvent,
-} from "../../types";
-import { ChatNotificationType } from "../../types";
-import { useChatSocket } from "../../hooks/useChatSocket";
-import Spinner from "../../components/Spinner";
-import UserList from "../../components/UserList";
-import ChatWindow from "../../components/ChatWindow";
-import EmptyChatState from "../../components/EmptyChatState";
+} from '../../types'
+import { ChatNotificationType } from '../../types'
+import { useChatSocket } from '../../hooks/useChatSocket'
+import Spinner from '../../components/Spinner'
+import UserList from '../../components/UserList'
+import ChatWindow from '../../components/ChatWindow'
+import EmptyChatState from '../../components/EmptyChatState'
+import styles from './Chat.module.css'
 
 const Chat: React.FC = () => {
-  const { user, logout } = useAuth();
-  const { showToast } = useToast();
+  const { user, logout } = useAuth()
+  const { showToast } = useToast()
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [users, setUsers] = useState<ChatUser[]>([]);
-  const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null);
-  const [conversationLoading, setConversationLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [users, setUsers] = useState<ChatUser[]>([])
+  const [selectedUser, setSelectedUser] = useState<ChatUser | null>(null)
+  const [conversationLoading, setConversationLoading] = useState(false)
   const [conversations, setConversations] = useState<
     Record<string, ChatMessage[]>
-  >({});
-  const hasFetched = useRef(false);
-  const selectedUserRef = useRef<ChatUser | null>(null);
-  selectedUserRef.current = selectedUser;
+  >({})
+  const hasFetched = useRef(false)
+  const selectedUserRef = useRef<ChatUser | null>(null)
+  selectedUserRef.current = selectedUser
 
   const removeMessageById = (
     conversations: Record<string, ChatMessage[]>,
@@ -48,63 +50,63 @@ const Chat: React.FC = () => {
         key,
         messages.filter((message) => message.id !== messageId),
       ]),
-    );
-  };
+    )
+  }
 
   const markConversationRead = useCallback(
     (senderId: string) => {
-      if (!user) return;
-      void markMessagesAsRead(senderId, user.slug).catch(() => {});
+      if (!user) return
+      void markMessagesAsRead(senderId, user.slug).catch(() => {})
     },
     [user],
-  );
+  )
 
   const handleIncomingMessage = useCallback(
     (event: ChatEvent) => {
       if (event.type === ChatNotificationType.MESSAGE) {
-        const message = event as unknown as ChatMessage;
+        const message = event as unknown as ChatMessage
         setConversations((prev) => {
           const otherId =
             user && message.senderId === user.slug
               ? message.recipientId
-              : message.senderId;
-          if (!otherId) return prev;
-          const existing = prev[otherId] ?? [];
+              : message.senderId
+          if (!otherId) return prev
+          const existing = prev[otherId] ?? []
           if (message.id && existing.some((m) => m.id === message.id))
-            return prev;
+            return prev
           if (user && message.senderId === user.slug) {
             const tempIndex = existing.findIndex(
               (m) =>
                 m.senderId === message.senderId &&
                 m.recipientId === message.recipientId &&
-                m.id?.startsWith("temp-"),
-            );
+                m.id?.startsWith('temp-'),
+            )
             if (tempIndex !== -1) {
-              const updated = [...existing];
+              const updated = [...existing]
               updated[tempIndex] = {
                 ...message,
                 timestamp: message.timestamp ?? new Date().toISOString(),
-              };
-              return { ...prev, [otherId]: updated };
+              }
+              return { ...prev, [otherId]: updated }
             }
           }
           const isViewing =
             selectedUserRef.current?.slug === message.senderId &&
-            user?.slug === message.recipientId;
+            user?.slug === message.recipientId
           const incoming: ChatMessage = {
             ...message,
             timestamp: message.timestamp ?? new Date().toISOString(),
             readByRecipient: isViewing ? true : message.readByRecipient,
-          };
+          }
           if (isViewing) {
-            markConversationRead(message.senderId);
+            markConversationRead(message.senderId)
           }
           return {
             ...prev,
             [otherId]: [...existing, incoming],
-          };
-        });
-        return;
+          }
+        })
+        return
       }
 
       if (event.type === ChatNotificationType.MESSAGE_READ) {
@@ -120,8 +122,8 @@ const Chat: React.FC = () => {
               ),
             ]),
           ),
-        );
-        return;
+        )
+        return
       }
 
       if (event.type === ChatNotificationType.MESSAGE_EDITED) {
@@ -141,76 +143,76 @@ const Chat: React.FC = () => {
               ),
             ]),
           ),
-        );
-        return;
+        )
+        return
       }
 
       if (event.type === ChatNotificationType.MESSAGE_DELETED && event.id) {
-        setConversations((prev) => removeMessageById(prev, event.id!));
+        setConversations((prev) => removeMessageById(prev, event.id!))
       }
     },
     [markConversationRead, user],
-  );
+  )
 
   const { sendMessage } = useChatSocket({
     username: user?.slug,
     onMessage: handleIncomingMessage,
-  });
+  })
 
   const fetchAllUsers = async (silent = false) => {
     try {
-      if (!silent) setIsLoading(true);
-      const { data } = await getConnectedUsers();
-      setUsers(data);
+      if (!silent) setIsLoading(true)
+      const { data } = await getConnectedUsers()
+      setUsers(data)
     } catch {
-      setUsers([]);
+      setUsers([])
       if (!silent) {
         showToast(
           "We couldn't load the chat list. Please refresh and try again.",
-          "error",
-        );
+          'error',
+        )
       }
     } finally {
-      if (!silent) setIsLoading(false);
+      if (!silent) setIsLoading(false)
     }
-  };
+  }
 
   useEffect(() => {
-    if (hasFetched.current) return;
-    hasFetched.current = true;
-    void fetchAllUsers();
-  }, []);
+    if (hasFetched.current) return
+    hasFetched.current = true
+    void fetchAllUsers()
+  }, [])
 
   // Keep online/offline statuses fresh while the user is on this page
   useEffect(() => {
-    const refresh = () => void fetchAllUsers(true);
-    const intervalId = window.setInterval(refresh, 15000);
-    window.addEventListener("focus", refresh);
+    const refresh = () => void fetchAllUsers(true)
+    const intervalId = window.setInterval(refresh, 15000)
+    window.addEventListener('focus', refresh)
     return () => {
-      window.clearInterval(intervalId);
-      window.removeEventListener("focus", refresh);
-    };
+      window.clearInterval(intervalId)
+      window.removeEventListener('focus', refresh)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [])
 
   const openConversation = async (otherUser: ChatUser) => {
-    setSelectedUser(otherUser);
-    if (!user) return;
-    setConversationLoading(true);
+    setSelectedUser(otherUser)
+    if (!user) return
+    setConversationLoading(true)
     try {
-      const { data } = await getChatMessages(user.slug, otherUser.slug);
+      const { data } = await getChatMessages(user.slug, otherUser.slug)
       setConversations((prev) => ({
         ...prev,
         [otherUser.slug]: data,
-      }));
+      }))
       const hasUnreadIncoming = data.some(
         (message) =>
           message.senderId === otherUser.slug &&
           message.recipientId === user.slug &&
           !message.readByRecipient,
-      );
+      )
       if (hasUnreadIncoming) {
-        markConversationRead(otherUser.slug);
+        markConversationRead(otherUser.slug)
         setConversations((prev) => ({
           ...prev,
           [otherUser.slug]: (prev[otherUser.slug] ?? []).map((message) =>
@@ -219,24 +221,24 @@ const Chat: React.FC = () => {
               ? { ...message, readByRecipient: true }
               : message,
           ),
-        }));
+        }))
       }
     } catch {
-      showToast("We couldn't load the messages. Please try again.", "error");
+      showToast("We couldn't load the messages. Please try again.", 'error')
     } finally {
-      setConversationLoading(false);
+      setConversationLoading(false)
     }
-  };
+  }
 
   const handleSend = (content: string, attachments?: ChatAttachment[]) => {
-    if (!user || !selectedUser) return;
-    const sent = sendMessage(selectedUser.slug, content, attachments);
+    if (!user || !selectedUser) return
+    const sent = sendMessage(selectedUser.slug, content, attachments)
     if (!sent) {
       showToast(
         "You're currently offline. Please wait a moment and try again.",
-        "error",
-      );
-      return;
+        'error',
+      )
+      return
     }
     const optimisticMessage: ChatMessage = {
       id: `temp-${Date.now()}`,
@@ -245,30 +247,30 @@ const Chat: React.FC = () => {
       content,
       attachments,
       timestamp: new Date().toISOString(),
-    };
+    }
     setConversations((prev) => ({
       ...prev,
       [selectedUser.slug]: [
         ...(prev[selectedUser.slug] ?? []),
         optimisticMessage,
       ],
-    }));
-  };
+    }))
+  }
 
   const handleEdit = async (
     messageId: string,
     content: string,
     attachments?: ChatAttachment[],
   ) => {
-    if (!user) return;
+    if (!user) return
     try {
       const updated = await editMessage(
         messageId,
         content,
         user.slug,
         attachments,
-      );
-      if (!selectedUser) return;
+      )
+      if (!selectedUser) return
       setConversations((prev) => ({
         ...prev,
         [selectedUser.slug]: (prev[selectedUser.slug] ?? []).map((message) =>
@@ -281,57 +283,57 @@ const Chat: React.FC = () => {
               }
             : message,
         ),
-      }));
+      }))
     } catch (error) {
-      showToast(getApiError(error), "error");
+      showToast(getApiError(error), 'error')
     }
-  };
+  }
 
   const handleDeleteForMe = async (messageId: string) => {
-    if (!user) return;
+    if (!user) return
     try {
-      await deleteMessageForMe(messageId, user.slug);
-      setConversations((prev) => removeMessageById(prev, messageId));
+      await deleteMessageForMe(messageId, user.slug)
+      setConversations((prev) => removeMessageById(prev, messageId))
     } catch (error) {
-      showToast(getApiError(error), "error");
+      showToast(getApiError(error), 'error')
     }
-  };
+  }
 
   const handleDeleteForEveryone = async (messageId: string) => {
-    if (!user) return;
+    if (!user) return
     try {
-      await deleteMessageForEveryone(messageId, user.slug);
-      setConversations((prev) => removeMessageById(prev, messageId));
+      await deleteMessageForEveryone(messageId, user.slug)
+      setConversations((prev) => removeMessageById(prev, messageId))
     } catch (error) {
-      showToast(getApiError(error), "error");
+      showToast(getApiError(error), 'error')
     }
-  };
+  }
 
   const handleLogout = async () => {
     if (user?.slug) {
       try {
-        await logoutUser({ username: user.slug });
+        await logoutUser({ username: user.slug })
       } catch {
         // Even if the backend logout fails, still clear the local session
       }
     }
-    logout();
-  };
+    logout()
+  }
 
   if (isLoading) {
-    return <Spinner />;
+    return <Spinner />
   }
 
   const availableUsers = users.filter(
     (connectedUser) => connectedUser.slug !== user?.slug,
-  );
+  )
 
   const selectedMessages = selectedUser
     ? (conversations[selectedUser.slug] ?? [])
-    : [];
+    : []
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-100">
+    <Box className={styles.root}>
       <UserList
         users={availableUsers}
         selectedSlug={selectedUser?.slug ?? null}
@@ -339,11 +341,11 @@ const Chat: React.FC = () => {
         onSelectUser={(connectedUser) => void openConversation(connectedUser)}
         onLogout={() => void handleLogout()}
       />
-      <main className="flex-1 overflow-hidden">
+      <Box component="main" className={styles.main}>
         {selectedUser ? (
           <ChatWindow
             otherUser={selectedUser}
-            mySlug={user?.slug ?? ""}
+            mySlug={user?.slug ?? ''}
             messages={selectedMessages}
             loading={conversationLoading}
             onSend={handleSend}
@@ -354,9 +356,9 @@ const Chat: React.FC = () => {
         ) : (
           <EmptyChatState />
         )}
-      </main>
-    </div>
-  );
-};
+      </Box>
+    </Box>
+  )
+}
 
-export default Chat;
+export default Chat

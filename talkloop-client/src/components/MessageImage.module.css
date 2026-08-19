@@ -1,0 +1,10 @@
+.image {
+  max-height: 288px;
+  max-width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.fallback {
+  color: var(--tl-text-disabled);
+}

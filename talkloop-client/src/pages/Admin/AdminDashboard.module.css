@@ -1,0 +1,63 @@
+.root {
+  min-height: 100vh;
+  padding: 24px;
+  background-color: var(--tl-background);
+}
+
+.card {
+  padding: 24px;
+  border: 1px solid var(--tl-divider);
+  background-color: var(--tl-surface);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brandCaption {
+  color: var(--tl-primary);
+  font-weight: 600;
+}
+
+.title {
+  margin-top: 4px;
+  font-weight: 700;
+}
+
+.alert {
+  margin-top: 24px;
+}
+
+.emptyText {
+  margin-top: 24px;
+  color: var(--tl-text-secondary);
+}
+
+.list {
+  margin-top: 16px;
+}
+
+.listItem {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--tl-divider);
+}
+
+.avatar {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.avatarDot {
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+  background-color: #10b981;
+}
+
+.userName {
+  font-weight: 600;
+}

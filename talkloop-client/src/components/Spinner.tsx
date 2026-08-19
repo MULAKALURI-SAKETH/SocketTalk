@@ -1,15 +1,13 @@
-import React from "react";
+import Box from '@mui/material/Box'
+import CircularProgress from '@mui/material/CircularProgress'
+import styles from './Spinner.module.css'
 
 const Spinner: React.FC = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div
-        role="status"
-        aria-label="Loading"
-        className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-200 border-t-indigo-600"
-      />
-    </div>
-  );
-};
+    <Box role="status" aria-label="Loading" className={styles.spinner}>
+      <CircularProgress size={40} />
+    </Box>
+  )
+}
 
-export default Spinner;
+export default Spinner

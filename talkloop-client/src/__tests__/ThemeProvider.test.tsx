@@ -1,60 +1,82 @@
-import { afterEach, describe, expect, it } from "@jest/globals";
-import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { ThemeProvider, useTheme } from "../context/ThemeProvider";
+import { describe, expect, it, jest } from '@jest/globals'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router-dom'
+import { useTheme as useMuiTheme } from '@mui/material/styles'
+
+jest.unstable_mockModule('../api/client', () => ({
+  getCurrentUser: jest
+    .fn<() => Promise<never>>()
+    .mockRejectedValue(new Error('not logged in')),
+  login: jest.fn(),
+  register: jest.fn(),
+  logoutUser: jest.fn(),
+  getApiError: jest.fn(),
+  updatePreferences: jest.fn<() => Promise<{}>>().mockResolvedValue({}),
+}))
+
+const { ThemeProvider, useTheme } = await import('../context/ThemeProvider')
+const { AuthProvider } = await import('../context/AuthContext')
 
 const Toggle: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme()
+  const muiTheme = useMuiTheme()
   return (
-    <button type="button" onClick={toggleTheme} aria-label="toggle theme">
-      {theme}
+    <button
+      type="button"
+      onClick={toggleTheme}
+      aria-label="toggle theme"
+      data-testid="theme-toggle"
+    >
+      {theme}:{muiTheme.palette.mode}
     </button>
-  );
-};
+  )
+}
 
 const renderToggle = () =>
   render(
-    <ThemeProvider>
-      <Toggle />
-    </ThemeProvider>,
-  );
+    <MemoryRouter>
+      <AuthProvider>
+        <ThemeProvider>
+          <Toggle />
+        </ThemeProvider>
+      </AuthProvider>
+    </MemoryRouter>,
+  )
 
-describe("ThemeContext", () => {
-  afterEach(() => {
-    document.documentElement.classList.remove("dark");
-  });
+describe('ThemeContext', () => {
+  it('starts in light mode', async () => {
+    renderToggle()
 
-  it("starts in light mode with no dark class", () => {
-    renderToggle();
+    expect(
+      await screen.findByRole('button', { name: 'toggle theme' }),
+    ).toHaveTextContent('light:light')
+  })
 
-    expect(screen.getByRole("button", { name: "toggle theme" })).toHaveTextContent(
-      "light",
-    );
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-  });
+  it('toggles to dark mode and applies the MUI dark palette', async () => {
+    const user = userEvent.setup()
+    renderToggle()
 
-  it("toggles to dark mode and applies the dark class", async () => {
-    const user = userEvent.setup();
-    renderToggle();
+    await user.click(
+      await screen.findByRole('button', { name: 'toggle theme' }),
+    )
 
-    await user.click(screen.getByRole("button", { name: "toggle theme" }));
+    expect(
+      screen.getByRole('button', { name: 'toggle theme' }),
+    ).toHaveTextContent('dark:dark')
+  })
 
-    expect(screen.getByRole("button", { name: "toggle theme" })).toHaveTextContent(
-      "dark",
-    );
-    expect(document.documentElement.classList.contains("dark")).toBe(true);
-  });
+  it('toggles back to light mode', async () => {
+    const user = userEvent.setup()
+    renderToggle()
 
-  it("toggles back to light mode and removes the dark class", async () => {
-    const user = userEvent.setup();
-    renderToggle();
+    await user.click(
+      await screen.findByRole('button', { name: 'toggle theme' }),
+    )
+    await user.click(screen.getByRole('button', { name: 'toggle theme' }))
 
-    await user.click(screen.getByRole("button", { name: "toggle theme" }));
-    await user.click(screen.getByRole("button", { name: "toggle theme" }));
-
-    expect(screen.getByRole("button", { name: "toggle theme" })).toHaveTextContent(
-      "light",
-    );
-    expect(document.documentElement.classList.contains("dark")).toBe(false);
-  });
-});
+    expect(
+      screen.getByRole('button', { name: 'toggle theme' }),
+    ).toHaveTextContent('light:light')
+  })
+})

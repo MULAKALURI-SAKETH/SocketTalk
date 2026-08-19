@@ -1,0 +1,44 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  position: relative;
+  display: flex;
+  height: 36px;
+  width: 36px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(to bottom right, #6366f1, #7c3aed);
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+  color: #fff;
+}
+
+.badge {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  display: flex;
+  height: 12px;
+  width: 12px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #34d399;
+  border: 2px solid #fff;
+}
+
+.text {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--tl-text);
+}
+
+.textWhite {
+  color: #fff;
+}

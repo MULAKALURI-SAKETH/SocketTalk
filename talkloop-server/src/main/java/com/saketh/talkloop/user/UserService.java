@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.saketh.talkloop.user.UserStatus.*;
 
@@ -82,6 +83,15 @@ public class UserService {
     public User findBySlug(String slug) {
         return userRepository.findById(slug)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Session expired or invalid."));
+    }
+
+    public User updatePreferences(String slug, Map<String, String> preferences) {
+        User user = findBySlug(slug);
+        if (user.getPreferences() == null) {
+            user.setPreferences(new java.util.HashMap<>());
+        }
+        user.getPreferences().putAll(preferences);
+        return userRepository.save(user);
     }
 
     private void validateCredentials(AuthRequest request) {

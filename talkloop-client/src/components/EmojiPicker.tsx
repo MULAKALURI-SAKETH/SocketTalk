@@ -1,63 +1,72 @@
-import React, { useMemo, useState } from "react";
-import { EmojiPickerProps } from "../interfaces/IChat";
-import { EMOJIS } from "../constants/chat";
+import React, { useMemo, useState } from 'react'
+import Box from '@mui/material/Box'
+import Paper from '@mui/material/Paper'
+import TextField from '@mui/material/TextField'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import Tooltip from '@mui/material/Tooltip'
+import { EmojiPickerProps } from '../interfaces/IChat'
+import { EMOJIS } from '../constants/chat'
+import styles from './EmojiPicker.module.css'
 
 const EmojiPicker: React.FC<EmojiPickerProps> = ({ onSelect, onClose }) => {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('')
 
   const filteredEmojis = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return EMOJIS;
-    return EMOJIS.filter((item) => item.label.includes(normalized));
-  }, [query]);
+    const normalized = query.trim().toLowerCase()
+    if (!normalized) return EMOJIS
+    return EMOJIS.filter((item) => item.label.includes(normalized))
+  }, [query])
 
   return (
-    <div
+    <Paper
       onMouseDown={(event) => event.stopPropagation()}
-      className="absolute bottom-14 left-0 z-20 w-72 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl"
+      elevation={12}
       role="dialog"
       aria-label="Emoji picker"
+      className={styles.picker}
     >
-      <div className="border-b border-slate-200 p-2">
-        <input
-          type="text"
+      <Box className={styles.searchRow}>
+        <TextField
+          size="small"
+          fullWidth
+          autoFocus
+          placeholder="Search emojis..."
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search emojis..."
-          autoFocus
-          className="w-full rounded-md border border-slate-300 px-3 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
         />
-      </div>
-      <div className="max-h-56 overflow-y-auto p-2">
+      </Box>
+      <Box className={styles.grid}>
         {filteredEmojis.length === 0 ? (
-          <p className="py-4 text-center text-sm text-slate-400">
+          <Typography variant="body2" className={styles.empty}>
             No emojis found.
-          </p>
+          </Typography>
         ) : (
-          <div className="grid grid-cols-8 gap-1">
-            {filteredEmojis.map((item) => (
-              <button
-                key={item.emoji}
+          filteredEmojis.map((item) => (
+            <Tooltip key={item.emoji} title={item.label}>
+              <Box
+                component="button"
                 type="button"
                 onClick={() => onSelect(item.emoji)}
-                className="flex h-8 w-8 items-center justify-center rounded-md text-xl hover:bg-slate-100"
-                title={item.label}
+                aria-label={item.label}
+                className={styles.emojiBtn}
               >
                 {item.emoji}
-              </button>
-            ))}
-          </div>
+              </Box>
+            </Tooltip>
+          ))
         )}
-      </div>
-      <button
-        type="button"
+      </Box>
+      <Button
+        fullWidth
+        size="small"
         onClick={onClose}
-        className="block w-full border-t border-slate-200 py-2 text-center text-sm font-medium text-slate-500 hover:bg-slate-50"
+        className={styles.closeBtn}
       >
         Close
-      </button>
-    </div>
-  );
-};
+      </Button>
+    </Paper>
+  )
+}
 
-export default EmojiPicker;
+export default EmojiPicker

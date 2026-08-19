@@ -16,8 +16,8 @@ SocketTalk/
 └── talkloop-client/            # React + TypeScript frontend (Vite)
     └── src/
         ├── api/                # REST calls to the backend
-        ├── components/         # chat window, sidebar, protected route, etc.
-        ├── context/            # auth + toast contexts
+        ├── components/         # chat window, sidebar, emoji picker, etc.
+        ├── context/            # auth, theme, and toast contexts
         ├── hooks/              # socket connection, forms, admin dashboard
         └── pages/              # login, register, chat home, admin dashboard
 ```
@@ -32,8 +32,9 @@ SocketTalk/
 
 ### Frontend (`talkloop-client/`)
 - React 19 + TypeScript
-- Vite (with `/auth`, `/users`, `/messages`, `/ws` dev proxy to port 8088)
-- Tailwind CSS 4
+- Vite (with `/auth`, `/users`, `/messages`, `/uploads`, `/ws` dev proxy to port 8088)
+- Material UI (MUI) for UI components
+- CSS Modules for scoped styling
 - `@stomp/stompjs` + `sockjs-client` for realtime messaging
 - React Router 7 for routing
 - Axios for REST calls
@@ -48,6 +49,10 @@ SocketTalk/
 - Realtime presence (online/offline) across connected clients
 - One-to-one messaging with historical message loading from MongoDB
 - Chat rooms grouped deterministically per sender/recipient pair
+- Edit and delete messages (for me or for everyone)
+- Read receipts with double-tick indicators
+- Share images and files as attachments (inline preview for images)
+- Dark mode / light mode toggle persisted server-side per user
 - Admin dashboard to view connected users and force logout
 - Auto-reconnecting WebSocket client (5s reconnect delay)
 - Protected routes that redirect unauthenticated users to `/login`
@@ -105,15 +110,21 @@ For a deployed client, set both variables, e.g. `VITE_API_BASE_URL=https://api.e
 
 All endpoints are served by the backend on port `8088`.
 
-| Method | Endpoint                          | Description                            |
-| ------ | --------------------------------- | -------------------------------------- |
-| POST   | `/auth/register`                  | Register a new user (username + password) |
-| POST   | `/auth/login`                     | Log in and mark the user online, issues the session cookie |
-| POST   | `/auth/logout`                    | Log out and mark the user offline, clears the session cookie |
-| GET    | `/auth/me`                        | Restore the current user from the session cookie |
-| GET    | `/users`                          | List all registered users (online + offline) |
-| GET    | `/users/online`                   | List currently online users            |
-| GET    | `/messages/{senderId}/{recipientId}` | Chat history between two users      |
+| Method | Endpoint                              | Description                                    |
+| ------ | ------------------------------------- | ---------------------------------------------- |
+| POST   | `/auth/register`                      | Register a new user (username + password)      |
+| POST   | `/auth/login`                         | Log in, mark user online, issue session cookie |
+| POST   | `/auth/logout`                        | Log out, mark user offline, clear cookie       |
+| GET    | `/auth/me`                            | Restore the current user from session cookie   |
+| PATCH  | `/auth/preferences`                   | Update user preferences (e.g. `{ "theme": "dark" }`) |
+| GET    | `/users`                              | List all registered users (online + offline)   |
+| GET    | `/users/online`                       | List currently online users                    |
+| POST   | `/uploads`                            | Upload an image or file (multipart form-data)  |
+| GET    | `/messages/{senderId}/{recipientId}`  | Chat history between two users                 |
+| POST   | `/messages/{senderId}/{recipientId}/read` | Mark messages as read                      |
+| PUT    | `/messages/{messageId}`               | Edit a message's content and/or attachments    |
+| DELETE | `/messages/{messageId}/for-me`        | Delete a message for the current user only     |
+| DELETE | `/messages/{messageId}/for-everyone`  | Delete a message for all participants          |
 
 ## Authentication
 
@@ -123,19 +134,23 @@ Login issues a server-side session token in an `HttpOnly` + `SameSite=Strict` co
 
 Connect to the SockJS endpoint `/ws` (with login header for the principal).
 
-| Destination                    | Direction | Purpose                              |
-| ------------------------------ | --------- | ------------------------------------ |
-| `/app/chat`                    | client → server | Send a `ChatMessage` (senderId, recipientId, content) |
-| `/user/queue/messages`         | server → client | Receive a `ChatNotification` for incoming messages |
-| `/app/user.addUser`            | client → server | Broadcast presence on connect         |
-| `/app/user.disconnectUser`     | client → server | Broadcast presence on disconnect      |
-| `/user/topic`                  | server → client | Presence updates for connected users  |
+| Destination                    | Direction       | Purpose                                        |
+| ------------------------------ | --------------- | ---------------------------------------------- |
+| `/app/chat`                    | client → server | Send a `ChatMessage`                           |
+| `/user/queue/messages`         | server → client | Receive a `ChatNotification` (message, read receipt, edit, or delete) |
+| `/app/user.addUser`            | client → server | Broadcast presence on connect                  |
+| `/app/user.disconnectUser`     | client → server | Broadcast presence on disconnect               |
+| `/user/topic`                  | server → client | Presence updates for connected users           |
+
+Notification types: `MESSAGE`, `MESSAGE_READ`, `MESSAGE_EDITED`, `MESSAGE_DELETED`.
 
 ## Data model
 
-- `User` — `slug` (username, PK), `fullName`, `password` (hashed, JSON-ignored), `userStatus` (ONLINE/OFFLINE)
-- `ChatMessage` — `id`, `chatId`, `senderId`, `recipientId`, `content`, `timestamp`
-- `ChatRoom` — `id`, `chatId`, `senderId`, `recipientId` (a deterministic `chatId` is generated per sender/recipient pair, so both sides can look up the same conversation)
+- `User` — `slug` (username, PK), `fullName`, `password` (hashed, JSON-ignored), `userStatus` (ONLINE/OFFLINE), `preferences` (map, e.g. `{ "theme": "dark" }`)
+- `Session` — `id` (SHA-256 hash of token), `username`, `expiresAt` (TTL-indexed, 1 hour)
+- `ChatMessage` — `id`, `chatId`, `senderId`, `recipientId`, `content`, `attachments[]`, `timestamp`, `edited`, `deletedForEveryone`, `readByRecipient`
+- `ChatAttachment` — `url`, `fileName`, `contentType`, `fileSize`
+- `ChatRoom` — `id`, `chatId`, `senderId`, `recipientId` (deterministic `chatId` per sender/recipient pair)
 
 ## Tests
 

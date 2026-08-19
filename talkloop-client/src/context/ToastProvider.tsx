@@ -1,39 +1,54 @@
-import { createContext, useContext, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { createContext, useContext, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
+import Snackbar from '@mui/material/Snackbar'
+import Alert from '@mui/material/Alert'
 
-type Toast = { message: string; type: "success" | "error" } | null;
+type Toast = { message: string; type: 'success' | 'error' } | null
 const ToastContext = createContext<{
-  showToast: (message: string, type: "success" | "error") => void;
-} | null>(null);
+  showToast: (message: string, type: 'success' | 'error') => void
+} | null>(null)
 
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
-  const [toast, setToast] = useState<Toast>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [toast, setToast] = useState<Toast>(null)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const showToast = (message: string, type: "success" | "error") => {
-    if (timer.current) clearTimeout(timer.current);
-    setToast({ message, type });
-    timer.current = setTimeout(() => setToast(null), 3500);
-  };
+  const showToast = (message: string, type: 'success' | 'error') => {
+    if (timer.current) clearTimeout(timer.current)
+    setToast({ message, type })
+    timer.current = setTimeout(() => setToast(null), 3500)
+  }
+
+  const handleClose = () => {
+    if (timer.current) clearTimeout(timer.current)
+    setToast(null)
+  }
+
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {toast && (
-        <div
+      <Snackbar
+        open={toast !== null}
+        autoHideDuration={3500}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          severity={toast?.type === 'success' ? 'success' : 'error'}
+          variant="filled"
+          onClose={handleClose}
           role="status"
-          className={`fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg px-5 py-3 text-sm font-semibold text-white shadow-xl ${toast.type === "success" ? "bg-green-300" : "bg-rose-600"}`}
         >
-          {toast.message}
-        </div>
-      )}
+          {toast?.message}
+        </Alert>
+      </Snackbar>
     </ToastContext.Provider>
-  );
-};
+  )
+}
 
 export const useToast = () => {
-  const context = useContext(ToastContext);
+  const context = useContext(ToastContext)
   if (!context) {
-    throw new Error("useToast must be used inside ToastProvider.");
+    throw new Error('useToast must be used inside ToastProvider.')
   }
-  return context;
-};
+  return context
+}

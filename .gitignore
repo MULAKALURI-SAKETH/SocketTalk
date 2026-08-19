@@ -41,3 +41,5 @@ vite.config.ts.timestamp-*
 target/
 uploads/
 .codegraphy/*
+
+talkloop-client/.prettierrc.json

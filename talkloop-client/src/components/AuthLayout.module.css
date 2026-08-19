@@ -1,0 +1,147 @@
+.root {
+  display: grid;
+  min-height: 100vh;
+  background-color: var(--tl-background);
+}
+
+.panel {
+  position: relative;
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: 24px;
+  background: linear-gradient(to bottom right, #4f46e5, #7c3aed, #c026d3);
+}
+
+.blobTop {
+  pointer-events: none;
+  position: absolute;
+  top: -96px;
+  left: -96px;
+  height: 288px;
+  width: 288px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  filter: blur(48px);
+}
+
+.blobBottom {
+  pointer-events: none;
+  position: absolute;
+  bottom: -128px;
+  right: -64px;
+  height: 384px;
+  width: 384px;
+  border-radius: 50%;
+  background-color: rgba(240, 171, 252, 0.2);
+  filter: blur(64px);
+}
+
+.panelHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.themeBtn {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.themeBtn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.panelBody {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.headline {
+  font-size: 1.875rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: #fff;
+  margin: 0;
+}
+
+.blurb {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 80px;
+  overflow: hidden;
+}
+
+.blurbText {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.125rem;
+  margin: 0;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dot {
+  height: 6px;
+  border-radius: 9999px;
+  background-color: rgba(255, 255, 255, 0.4);
+  width: 6px;
+  transition: all 300ms;
+}
+
+.dotActive {
+  width: 24px;
+  background-color: #fff;
+}
+
+.panelFooter {
+  position: relative;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.formCol {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.mobileHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.mobileToggle {
+  color: var(--tl-text-secondary);
+}
+
+.formWrap {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+@media (min-width: 1024px) {
+  .root {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .panel {
+    display: flex;
+  }
+
+  .mobileHeader {
+    display: none;
+  }
+}

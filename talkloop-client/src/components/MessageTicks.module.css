@@ -1,0 +1,12 @@
+.tick {
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.read {
+  color: #7dd3fc;
+}
+
+.delivered {
+  color: #cbd5e1;
+}

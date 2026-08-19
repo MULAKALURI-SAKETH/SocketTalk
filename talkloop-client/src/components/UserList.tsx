@@ -1,6 +1,25 @@
-import React from "react";
-import { IUserStatus } from "../types";
-import { UserListProps } from "../interfaces/IChat";
+import React, { useState } from 'react'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Avatar from '@mui/material/Avatar'
+import Badge from '@mui/material/Badge'
+import List from '@mui/material/List'
+import ListItemButton from '@mui/material/ListItemButton'
+import ListItemAvatar from '@mui/material/ListItemAvatar'
+import ListItemText from '@mui/material/ListItemText'
+import Button from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import Menu from '@mui/material/Menu'
+import MenuItem from '@mui/material/MenuItem'
+import ListItemIcon from '@mui/material/ListItemIcon'
+import LightMode from '@mui/icons-material/LightMode'
+import DarkMode from '@mui/icons-material/DarkMode'
+import Logout from '@mui/icons-material/Logout'
+import Settings from '@mui/icons-material/Settings'
+import { IUserStatus } from '../types'
+import { UserListProps } from '../interfaces/IChat'
+import { useTheme } from '../context/ThemeProvider'
+import styles from './UserList.module.css'
 
 const UserList: React.FC<UserListProps> = ({
   users,
@@ -9,73 +28,120 @@ const UserList: React.FC<UserListProps> = ({
   onSelectUser,
   onLogout,
 }) => {
-  return (
-    <aside className="flex w-80 shrink-0 flex-col border-r border-slate-200 bg-white">
-      <header className="border-b border-slate-200 px-4 py-4">
-        <p className="text-sm font-semibold text-indigo-600">SocketTalk</p>
-        <h1 className="mt-1 text-xl font-bold text-slate-800">Chats</h1>
-        {currentUserName && (
-          <p className="mt-1 text-sm text-slate-500">
-            Logged in as {currentUserName}
-          </p>
-        )}
-      </header>
+  const { theme, toggleTheme } = useTheme()
+  const [settingsAnchor, setSettingsAnchor] = useState<HTMLElement | null>(null)
 
-      <ul className="flex-1 overflow-y-auto py-2">
+  return (
+    <Box component="aside" className={styles.aside}>
+      <Box className={styles.header}>
+        <Box className={styles.headerTop}>
+          <Typography variant="caption" className={styles.brandLabel}>
+            SocketTalk
+          </Typography>
+          <IconButton
+            onClick={(e) => setSettingsAnchor(e.currentTarget)}
+            aria-label="Settings"
+            size="small"
+            className={styles.settingsBtn}
+          >
+            <Settings fontSize="small" />
+          </IconButton>
+          <Menu
+            anchorEl={settingsAnchor}
+            open={Boolean(settingsAnchor)}
+            onClose={() => setSettingsAnchor(null)}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem
+              onClick={() => {
+                toggleTheme()
+                setSettingsAnchor(null)
+              }}
+            >
+              <ListItemIcon>
+                {theme === 'dark' ? (
+                  <LightMode fontSize="small" />
+                ) : (
+                  <DarkMode fontSize="small" />
+                )}
+              </ListItemIcon>
+              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </MenuItem>
+            <MenuItem
+              onClick={() => {
+                onLogout()
+                setSettingsAnchor(null)
+              }}
+            >
+              <ListItemIcon>
+                <Logout fontSize="small" color="error" />
+              </ListItemIcon>
+              <Typography color="error">Logout</Typography>
+            </MenuItem>
+          </Menu>
+        </Box>
+        <Typography variant="h6" component="h1" className={styles.title}>
+          Chats
+        </Typography>
+        {currentUserName && (
+          <Typography variant="body2" className={styles.userInfo}>
+            Logged in as {currentUserName}
+          </Typography>
+        )}
+      </Box>
+
+      <List disablePadding className={styles.list}>
         {users.map((connectedUser) => {
-          const isSelected = connectedUser.slug === selectedSlug;
-          const isOnline = connectedUser.userStatus === IUserStatus.ONLINE;
+          const isSelected = connectedUser.slug === selectedSlug
+          const isOnline = connectedUser.userStatus === IUserStatus.ONLINE
           return (
-            <li key={connectedUser.slug}>
-              <button
-                type="button"
-                onClick={() => onSelectUser(connectedUser)}
-                className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
-                  isSelected ? "bg-blue-100" : "hover:bg-slate-50"
-                }`}
-              >
-                <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
-                  {connectedUser.fullName.charAt(0).toUpperCase()}
-                  <span
-                    className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full ring-2 ring-white ${
-                      isOnline ? "bg-emerald-500" : "bg-slate-400"
-                    }`}
-                  />
-                </span>
-                <span className="flex min-w-0 flex-col">
-                  <span className="truncate font-semibold text-slate-800">
+            <ListItemButton
+              key={connectedUser.slug}
+              onClick={() => onSelectUser(connectedUser)}
+              selected={isSelected}
+              className={styles.item}
+            >
+              <ListItemAvatar>
+                <Badge
+                  overlap="circular"
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  variant="dot"
+                  className={`${styles.statusBadge} ${
+                    isOnline ? styles.statusBadgeOnline : ''
+                  }`}
+                >
+                  <Avatar className={styles.avatar}>
+                    {connectedUser.fullName.charAt(0).toUpperCase()}
+                  </Avatar>
+                </Badge>
+              </ListItemAvatar>
+              <ListItemText
+                primary={
+                  <Typography className={styles.name}>
                     {connectedUser.fullName}
-                  </span>
-                  <span
-                    className={`text-xs ${
-                      isOnline ? "text-emerald-600" : "text-slate-500"
-                    }`}
+                  </Typography>
+                }
+                secondary={
+                  <Typography
+                    variant="caption"
+                    className={isOnline ? styles.online : styles.offline}
                   >
-                    {isOnline ? "Online" : "Offline"}
-                  </span>
-                </span>
-              </button>
-            </li>
-          );
+                    {isOnline ? 'Online' : 'Offline'}
+                  </Typography>
+                }
+              />
+            </ListItemButton>
+          )
         })}
         {users.length === 0 && (
-          <p className="px-4 py-6 text-center text-sm text-slate-500">
+          <Typography variant="body2" className={styles.empty}>
             No users yet. Invite someone to start chatting.
-          </p>
+          </Typography>
         )}
-      </ul>
+      </List>
+    </Box>
+  )
+}
 
-      <footer className="border-t border-slate-200 p-3">
-        <button
-          type="button"
-          onClick={onLogout}
-          className="w-full rounded-md bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-        >
-          Logout
-        </button>
-      </footer>
-    </aside>
-  );
-};
-
-export default UserList;
+export default UserList
